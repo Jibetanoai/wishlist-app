@@ -48,7 +48,8 @@ exports.handler = async (event) => {
   }
 
   if (!res.ok) {
-    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ' }) };
+    const errBody = await res.text().catch(() => '');
+    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ', debugStatus: res.status, debugBody: errBody }) };
   }
 
   const data = await res.json();
