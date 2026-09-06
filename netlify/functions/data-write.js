@@ -1,7 +1,7 @@
 // リストデータの書き込み。パスコードが合ってる時だけ書き込みを許可する。
 // パスコードはNetlifyの環境変数(EDIT_PASSCODE)にだけ保存し、クライアント側コードには
 // 一切書かない。閲覧は誰でもできるが、編集はKさんだけができるようにするための仕組み。
-const { getStore } = require('@netlify/blobs');
+const { getWishlistStore } = require('./_blobStore');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -28,10 +28,10 @@ exports.handler = async (event) => {
   }
 
   try {
-    const store = getStore('wishlist-data');
+    const store = getWishlistStore();
     await store.setJSON('main', data);
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to save data' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to save data', debug: String(err && err.message || err) }) };
   }
 };
