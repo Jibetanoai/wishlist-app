@@ -39,9 +39,17 @@ exports.handler = async (event) => {
   });
   if (affiliateId) params.set('affiliateId', affiliateId);
 
+  // このAPIはRefererヘッダーを見て「Allowed websitesに登録したサイトからの
+  // アクセスか」を確認するため、サーバー側から呼ぶ場合は自分でReferer
+  // ヘッダーを付ける必要がある(ブラウザなら自動で付くがサーバー間通信では付かない)。
+  // process.env.URLはNetlifyが自動で設定する、このサイト自身のURL。
+  const referer = process.env.URL || 'https://famous-biscochitos-f8ab60.netlify.app';
+
   let res;
   try {
-    res = await fetch(`${RAKUTEN_ENDPOINT}?${params.toString()}`);
+    res = await fetch(`${RAKUTEN_ENDPOINT}?${params.toString()}`, {
+      headers: { Referer: referer },
+    });
   } catch {
     return { statusCode: 502, body: JSON.stringify({ error: '楽天への通信に失敗したよ' }) };
   }
