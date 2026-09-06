@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ウィッシュリスト</title>
+<meta name="theme-color" content="#e0607e">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>🎁 ウィッシュリスト</h1>
+  <button id="editModeBtn" class="edit-mode-btn">🔒 編集</button>
+</header>
+
+<nav class="section-nav" id="sectionNav">
+  <button class="section-tab active" data-section="wishlist">🎁 ほしい物</button>
+  <button class="section-tab" data-section="bucketlist">✅ やりたいこと</button>
+  <button class="section-tab" data-section="travellist">✈️ 行きたいところ</button>
+</nav>
+
+<div id="loadingState" class="loading-state">読み込み中…</div>
+
+<!-- ============ ほしい物リスト ============ -->
+<section id="section-wishlist" class="app-section" hidden>
+  <div class="section-toolbar">
+    <div class="spacer"></div>
+    <button id="addWishBtn" class="btn btn-primary edit-only" hidden>＋ ほしい物を追加</button>
+  </div>
+  <div id="wishEmptyState" class="empty-state" hidden>まだ何も登録されてないよ。</div>
+  <div id="wishGrid" class="card-grid"></div>
+</section>
+
+<!-- ============ やりたいことリスト ============ -->
+<section id="section-bucketlist" class="app-section" hidden>
+  <div class="section-toolbar">
+    <div class="spacer"></div>
+    <button id="addBucketBtn" class="btn btn-primary edit-only" hidden>＋ やりたいことを追加</button>
+  </div>
+  <div id="bucketEmptyState" class="empty-state" hidden>まだ何も登録されてないよ。</div>
+  <div id="bucketList" class="simple-list"></div>
+</section>
+
+<!-- ============ 行きたいところリスト ============ -->
+<section id="section-travellist" class="app-section" hidden>
+  <div class="section-toolbar">
+    <div class="spacer"></div>
+    <button id="addTravelBtn" class="btn btn-primary edit-only" hidden>＋ 行きたい場所を追加</button>
+  </div>
+  <div id="travelEmptyState" class="empty-state" hidden>まだ何も登録されてないよ。</div>
+  <div id="travelList" class="simple-list"></div>
+</section>
+
+<!-- ============ 編集モード解除モーダル ============ -->
+<div id="editUnlockModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🔒 編集モード</h2>
+      <button class="icon-btn js-close-unlock" aria-label="閉じる">×</button>
+    </div>
+    <p class="disclaimer-note">編集にはパスコードが必要だよ。見るだけの人はこの画面を閉じてね。</p>
+    <form id="editUnlockForm">
+      <label>パスコード
+        <input type="password" id="editPasscodeInput" autocomplete="off" required>
+      </label>
+      <p id="editUnlockError" class="login-error" hidden>パスコードが違うみたい。</p>
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button type="button" class="btn js-close-unlock">キャンセル</button>
+        <button type="submit" class="btn btn-primary">解除する</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ほしい物モーダル ============ -->
+<div id="wishModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="wishModalTitle">ほしい物を追加</h2>
+      <button class="icon-btn js-close-wish" aria-label="閉じる">×</button>
+    </div>
+    <div class="source-tabs" id="wishSourceTabs">
+      <button type="button" class="tab active" data-source="rakuten">楽天で検索</button>
+      <button type="button" class="tab" data-source="amazon">Amazon(手動)</button>
+      <button type="button" class="tab" data-source="other">その他</button>
+    </div>
+
+    <div id="rakutenSearchPanel" class="source-panel">
+      <div class="form-row">
+        <input type="text" id="rakutenKeyword" placeholder="商品名で検索(例: ワイヤレスイヤホン)">
+        <button type="button" id="rakutenSearchBtn" class="btn">検索</button>
+      </div>
+      <div id="rakutenSearchStatus" class="ocr-status" hidden></div>
+      <div id="rakutenResults" class="rakuten-results"></div>
+    </div>
+
+    <form id="wishForm" class="source-panel" hidden>
+      <input type="hidden" id="wishId">
+      <input type="hidden" id="wishSource" value="other">
+      <label>商品名 <span class="required">*</span>
+        <input type="text" id="wish_title" required>
+      </label>
+      <div class="form-row">
+        <label>価格(円)
+          <input type="number" id="wish_price" min="0">
+        </label>
+        <label>画像URL(あれば)
+          <input type="text" id="wish_image">
+        </label>
+      </div>
+      <label>商品ページのURL
+        <input type="text" id="wish_url" placeholder="https://www.amazon.co.jp/...">
+      </label>
+      <label>メモ
+        <textarea id="wish_memo" rows="2"></textarea>
+      </label>
+      <div class="modal-footer">
+        <button type="button" id="deleteWishBtn" class="btn btn-danger" hidden>削除</button>
+        <div class="spacer"></div>
+        <button type="button" class="btn js-close-wish">キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ やりたいことモーダル ============ -->
+<div id="bucketModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="bucketModalTitle">やりたいことを追加</h2>
+      <button class="icon-btn js-close-bucket" aria-label="閉じる">×</button>
+    </div>
+    <form id="bucketForm">
+      <input type="hidden" id="bucketId">
+      <label>やりたいこと <span class="required">*</span>
+        <input type="text" id="bucket_title" required placeholder="例: 富士山に登る">
+      </label>
+      <label>メモ
+        <textarea id="bucket_memo" rows="2" placeholder="いつまでに、どんな理由で、など"></textarea>
+      </label>
+      <label>関連リンク(あれば。Amazon・楽天のリンクも貼れるよ)
+        <input type="text" id="bucket_link">
+      </label>
+      <div class="modal-footer">
+        <button type="button" id="deleteBucketBtn" class="btn btn-danger" hidden>削除</button>
+        <div class="spacer"></div>
+        <button type="button" class="btn js-close-bucket">キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ 行きたいところモーダル ============ -->
+<div id="travelModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="travelModalTitle">行きたい場所を追加</h2>
+      <button class="icon-btn js-close-travel" aria-label="閉じる">×</button>
+    </div>
+    <form id="travelForm">
+      <input type="hidden" id="travelId">
+      <label>場所の名前 <span class="required">*</span>
+        <input type="text" id="travel_title" required placeholder="例: 沖縄">
+      </label>
+      <label>メモ
+        <textarea id="travel_memo" rows="2" placeholder="行きたい理由、時期など"></textarea>
+      </label>
+      <label>関連リンク(あれば。地図・宿泊予約・Amazon/楽天のリンクなど)
+        <input type="text" id="travel_link">
+      </label>
+      <div class="modal-footer">
+        <button type="button" id="deleteTravelBtn" class="btn btn-danger" hidden>削除</button>
+        <div class="spacer"></div>
+        <button type="button" class="btn js-close-travel">キャンセル</button>
+        <button type="submit" class="btn btn-primary">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="wishlist.js"></script>
+<script src="bucketlist.js"></script>
+<script src="travellist.js"></script>
+</body>
+</html>

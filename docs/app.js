@@ -1,0 +1,156 @@
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+function localDateStr(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Amazonのアソシエイトタグ。公開情報(URLのパラメータ)なのでクライアント側に置いてOK。
+// Kさんのアソシエイトタグが決まったらここに入れる。
+const AMAZON_ASSOCIATE_TAG = '';
+
+function extractAsin(url) {
+  if (!url) return null;
+  const m = String(url).match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})/i);
+  return m ? m[1] : null;
+}
+
+// Amazonのリンクにアソシエイトタグを付ける。ASINが取れなければ元のURLをそのまま返す。
+function buildAmazonAffiliateUrl(url) {
+  if (!url) return url;
+  if (!AMAZON_ASSOCIATE_TAG) return url;
+  const asin = extractAsin(url);
+  if (!asin) return url;
+  return `https://www.amazon.co.jp/dp/${asin}?tag=${encodeURIComponent(AMAZON_ASSOCIATE_TAG)}`;
+}
+
+// Keepa(価格推移を見れる無料の外部サービス)の商品ページへのリンクを作る。
+// 5 = amazon.co.jp を表すKeepaのドメイン番号。
+function buildKeepaUrl(url) {
+  const asin = extractAsin(url);
+  return asin ? `https://keepa.com/#!product/5-${asin}` : null;
+}
+
+// URLの種類を判定して、Amazonならアフィリエイトタグを付ける。楽天は検索経由で
+// 追加したものだけアフィリエイト対応(URLを直接貼っただけのものは対象外)。
+function decorateLink(url) {
+  if (!url) return null;
+  if (/amazon\.co\.jp/i.test(url)) return buildAmazonAffiliateUrl(url);
+  return url;
+}
+
+let appData = { wishlist: [], bucketlist: [], travellist: [] };
+let currentSection = 'wishlist';
+let editUnlocked = false;
+
+const EDIT_PASSCODE_KEY = 'wishlist_edit_passcode';
+
+function getSavedPasscode() {
+  try {
+    return sessionStorage.getItem(EDIT_PASSCODE_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function setSavedPasscode(v) {
+  try {
+    sessionStorage.setItem(EDIT_PASSCODE_KEY, v);
+  } catch { /* noop */ }
+}
+
+async function fetchData() {
+  const res = await fetch('/.netlify/functions/data-get');
+  if (!res.ok) throw new Error('データの読み込みに失敗したよ');
+  return res.json();
+}
+
+async function saveData() {
+  const res = await fetch('/.netlify/functions/data-write', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ passcode: getSavedPasscode(), data: appData }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error === 'Wrong passcode' ? 'パスコードが違うみたいで保存できなかったよ' : '保存に失敗したよ');
+  }
+}
+
+function updateEditUi() {
+  document.querySelectorAll('.edit-only').forEach((el) => { el.hidden = !editUnlocked; });
+  document.getElementById('editModeBtn').textContent = editUnlocked ? '🔓 編集中' : '🔒 編集';
+}
+
+function switchSection(name) {
+  currentSection = name;
+  document.querySelectorAll('.app-section').forEach((sec) => {
+    sec.hidden = sec.id !== `section-${name}`;
+  });
+  document.querySelectorAll('.section-tab').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.section === name);
+  });
+  if (name === 'wishlist') renderWishlist();
+  else if (name === 'bucketlist') renderBucketlist();
+  else if (name === 'travellist') renderTravellist();
+}
+
+document.getElementById('sectionNav').addEventListener('click', (e) => {
+  const btn = e.target.closest('.section-tab');
+  if (!btn) return;
+  switchSection(btn.dataset.section);
+});
+
+const editUnlockModalOverlay = document.getElementById('editUnlockModalOverlay');
+document.getElementById('editModeBtn').addEventListener('click', () => {
+  if (editUnlocked) {
+    editUnlocked = false;
+    setSavedPasscode('');
+    updateEditUi();
+    return;
+  }
+  document.getElementById('editPasscodeInput').value = '';
+  document.getElementById('editUnlockError').hidden = true;
+  editUnlockModalOverlay.hidden = false;
+});
+document.querySelectorAll('.js-close-unlock').forEach((btn) => btn.addEventListener('click', () => {
+  editUnlockModalOverlay.hidden = true;
+}));
+editUnlockModalOverlay.addEventListener('click', (e) => {
+  if (e.target === editUnlockModalOverlay) editUnlockModalOverlay.hidden = true;
+});
+document.getElementById('editUnlockForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const passcode = document.getElementById('editPasscodeInput').value;
+  setSavedPasscode(passcode);
+  try {
+    // 実際に書き込みが通るかどうかで、パスコードが合ってるか確認する。
+    await saveData();
+    editUnlocked = true;
+    editUnlockModalOverlay.hidden = true;
+    updateEditUi();
+  } catch {
+    setSavedPasscode('');
+    document.getElementById('editUnlockError').hidden = false;
+  }
+});
+
+async function init() {
+  try {
+    appData = await fetchData();
+  } catch {
+    appData = { wishlist: [], bucketlist: [], travellist: [] };
+    alert('データの読み込みに失敗したよ。ネット接続を確認して再読み込みしてね。');
+  }
+  document.getElementById('loadingState').hidden = true;
+  updateEditUi();
+  switchSection('wishlist');
+}
+
+init();
