@@ -1,9 +1,8 @@
 // 楽天市場商品検索(公式・無料の楽天ウェブサービスAPI)。
-// applicationIdはAPI利用のための鍵(必須)、accessKeyは新しいAPIバージョンで
-// 必要になる場合がある鍵(あれば使う)、affiliateIdは検索結果にアフィリエイト
-// リンクを自動で付けてもらうための鍵。どれもNetlifyの環境変数にだけ置き、
-// クライアント側コードには一切書かない。
-const RAKUTEN_ENDPOINT = 'https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601';
+// 2026年7月版のAPIはapplicationId・accessKeyの両方が必須。affiliateIdは
+// 検索結果にアフィリエイトリンクを自動で付けてもらうための鍵。どれも
+// Netlifyの環境変数にだけ置き、クライアント側コードには一切書かない。
+const RAKUTEN_ENDPOINT = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -23,21 +22,21 @@ exports.handler = async (event) => {
   }
 
   const applicationId = process.env.RAKUTEN_APP_ID;
-  const accessKey = process.env.RAKUTEN_ACCESS_KEY; // 未設定でもOK(必要な場合だけ使う)
+  const accessKey = process.env.RAKUTEN_ACCESS_KEY;
   const affiliateId = process.env.RAKUTEN_AFFILIATE_ID; // 未設定でも検索自体は動く
 
-  if (!applicationId) {
+  if (!applicationId || !accessKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server not configured' }) };
   }
 
   const params = new URLSearchParams({
     applicationId,
+    accessKey,
     keyword,
     hits: '10',
     sort: '+itemPrice',
     format: 'json',
   });
-  if (accessKey) params.set('accessKey', accessKey);
   if (affiliateId) params.set('affiliateId', affiliateId);
 
   let res;
