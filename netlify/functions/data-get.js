@@ -14,6 +14,6 @@ exports.handler = async () => {
       body: JSON.stringify(data || EMPTY_DATA),
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to load data' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to load data', debug: String(err && err.stack || err) }) };
   }
 };
