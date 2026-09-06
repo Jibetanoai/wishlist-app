@@ -1,8 +1,33 @@
 // 楽天市場商品検索(公式・無料の楽天ウェブサービスAPI)。
-// 2026年7月版のAPIはapplicationId・accessKeyの両方が必須。affiliateIdは
-// 検索結果にアフィリエイトリンクを自動で付けてもらうための鍵。どれも
-// Netlifyの環境変数にだけ置き、クライアント側コードには一切書かない。
-const RAKUTEN_ENDPOINT = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
+// 2026年7月版のAPIはapplicationId・accessKeyの両方が必須で、さらに
+// Allowed websitesに登録したサイトからのアクセスかをRefererヘッダーで
+// 確認する仕様。Node.jsのfetch()は仕様上Refererヘッダーを上書きできない
+// (ブラウザと同じ「forbidden header」扱いのため)ので、httpsモジュールで
+// 直接リクエストを組み立てて回避する。
+const https = require('https');
+
+const RAKUTEN_HOST = 'openapi.rakuten.co.jp';
+const RAKUTEN_PATH = '/ichibams/api/IchibaItem/Search/20260701';
+
+function requestRakuten(path, referer) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        hostname: RAKUTEN_HOST,
+        path,
+        method: 'GET',
+        headers: { Referer: referer },
+      },
+      (res) => {
+        let body = '';
+        res.on('data', (chunk) => { body += chunk; });
+        res.on('end', () => resolve({ statusCode: res.statusCode, body }));
+      },
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -39,27 +64,21 @@ exports.handler = async (event) => {
   });
   if (affiliateId) params.set('affiliateId', affiliateId);
 
-  // このAPIはRefererヘッダーを見て「Allowed websitesに登録したサイトからの
-  // アクセスか」を確認するため、サーバー側から呼ぶ場合は自分でReferer
-  // ヘッダーを付ける必要がある(ブラウザなら自動で付くがサーバー間通信では付かない)。
   // process.env.URLはNetlifyが自動で設定する、このサイト自身のURL。
   const referer = process.env.URL || 'https://famous-biscochitos-f8ab60.netlify.app';
 
   let res;
   try {
-    res = await fetch(`${RAKUTEN_ENDPOINT}?${params.toString()}`, {
-      headers: { Referer: referer },
-    });
+    res = await requestRakuten(`${RAKUTEN_PATH}?${params.toString()}`, referer);
   } catch {
     return { statusCode: 502, body: JSON.stringify({ error: '楽天への通信に失敗したよ' }) };
   }
 
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '');
-    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ', debugStatus: res.status, debugBody: errBody }) };
+  if (res.statusCode < 200 || res.statusCode >= 300) {
+    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ', debugStatus: res.statusCode, debugBody: res.body }) };
   }
 
-  const data = await res.json();
+  const data = JSON.parse(res.body);
   const items = (data.Items || []).map((wrap) => {
     const item = wrap.Item || wrap;
     return {
