@@ -45,7 +45,8 @@ function decorateLink(url) {
   return url;
 }
 
-let appData = { wishlist: [], bucketlist: [], travellist: [] };
+const EMPTY_APP_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [] };
+let appData = { ...EMPTY_APP_DATA };
 let currentSection = 'wishlist';
 let editUnlocked = false;
 
@@ -97,8 +98,7 @@ function switchSection(name) {
     btn.classList.toggle('active', btn.dataset.section === name);
   });
   if (name === 'wishlist') renderWishlist();
-  else if (name === 'bucketlist') renderBucketlist();
-  else if (name === 'travellist') renderTravellist();
+  else if (SIMPLE_LISTS[name]) renderSimpleList(name);
 }
 
 document.getElementById('sectionNav').addEventListener('click', (e) => {
@@ -145,7 +145,7 @@ async function init() {
   try {
     appData = await fetchData();
   } catch {
-    appData = { wishlist: [], bucketlist: [], travellist: [] };
+    appData = { ...EMPTY_APP_DATA };
     alert('データの読み込みに失敗したよ。ネット接続を確認して再読み込みしてね。');
   }
   document.getElementById('loadingState').hidden = true;
