@@ -69,6 +69,7 @@ const VALUECOMMERCE_PIDS = {
   'furusato.asahi.co.jp': '892693520', // ふるさと納税ニッポン!(朝日新聞運営)
   'satofull.jp': '892693524', // さとふる
   'furusato-tax.jp': '892693527', // ふるさとチョイス
+  'furunavi.jp': '892693530', // ふるなび
 };
 
 // バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
