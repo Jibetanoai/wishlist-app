@@ -29,13 +29,24 @@ function extractAsin(url) {
   return m ? m[1] : null;
 }
 
-// Amazonのリンクにアソシエイトタグを付ける。ASINが取れなければ元のURLをそのまま返す。
+// Amazonのリンクにアソシエイトタグを付ける。ASINが取れればきれいなURLを作り、
+// amzn.asia/amzn.to等の短縮URL(スマホの共有ボタンからだとこの形式で来ることが多い)
+// でASINが取れない場合は、元のURLにtagパラメータを足すだけにする
+// (Amazon側のリダイレクトでクエリパラメータが引き継がれることを期待した対応)。
 function buildAmazonAffiliateUrl(url) {
   if (!url) return url;
   if (!AMAZON_ASSOCIATE_TAG) return url;
   const asin = extractAsin(url);
-  if (!asin) return url;
-  return `https://www.amazon.co.jp/dp/${asin}?tag=${encodeURIComponent(AMAZON_ASSOCIATE_TAG)}`;
+  if (asin) {
+    return `https://www.amazon.co.jp/dp/${asin}?tag=${encodeURIComponent(AMAZON_ASSOCIATE_TAG)}`;
+  }
+  try {
+    const u = new URL(url);
+    u.searchParams.set('tag', AMAZON_ASSOCIATE_TAG);
+    return u.toString();
+  } catch {
+    return url;
+  }
 }
 
 // Keepa(価格推移を見れる無料の外部サービス)の商品ページへのリンクを作る。
@@ -100,7 +111,7 @@ function buildValueCommerceUrl(url) {
 // アフィリエイトを自動で付ける。
 function decorateLink(url) {
   if (!url) return null;
-  if (/amazon\.co\.jp/i.test(url)) return buildAmazonAffiliateUrl(url);
+  if (/amazon\.co\.jp|amzn\.asia|amzn\.to/i.test(url)) return buildAmazonAffiliateUrl(url);
   if (/(^|\.)rakuten\.co\.jp/i.test(url)) return buildRakutenAffiliateUrl(url);
   return buildValueCommerceUrl(url);
 }

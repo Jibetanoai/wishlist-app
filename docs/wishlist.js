@@ -93,6 +93,7 @@ function openAddWishModal() {
   document.getElementById('rakutenKeyword').value = '';
   document.getElementById('rakutenResults').innerHTML = '';
   document.getElementById('rakutenSearchStatus').hidden = true;
+  document.getElementById('wishImageResults').innerHTML = '';
   document.getElementById('wishModalTitle').textContent = 'ほしい物を追加';
   deleteWishBtn.hidden = true;
   setWishSourceTab('rakuten');
@@ -106,6 +107,7 @@ function openWishModal(item) {
   document.getElementById('wish_image').value = item.image || '';
   document.getElementById('wish_url').value = item.url || '';
   document.getElementById('wish_memo').value = item.memo || '';
+  document.getElementById('wishImageResults').innerHTML = '';
   document.getElementById('wishModalTitle').textContent = 'ほしい物を編集';
   deleteWishBtn.hidden = false;
   setWishSourceTab(item.source || 'other');
