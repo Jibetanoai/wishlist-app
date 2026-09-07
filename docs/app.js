@@ -90,6 +90,7 @@ const VALUECOMMERCE_PIDS = {
   'satofull.jp': '892693524', // さとふる
   'furusato-tax.jp': '892693527', // ふるさとチョイス
   'furunavi.jp': '892693530', // ふるなび
+  'shopping.yahoo.co.jp': '892693719', // Yahoo!ショッピング(store.shopping/talk.shopping等のサブドメインも含む)
 };
 
 // バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
