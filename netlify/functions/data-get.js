@@ -2,7 +2,7 @@
 // 誰でも(家族・友人も)閲覧できるように、認証は一切かけない公開エンドポイント。
 const { getWishlistStore } = require('./_blobStore');
 
-const EMPTY_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [] };
+const EMPTY_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [], furusatolist: [] };
 
 exports.handler = async () => {
   try {
@@ -14,6 +14,6 @@ exports.handler = async () => {
       body: JSON.stringify(data || EMPTY_DATA),
     };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to load data', debug: String(err && err.stack || err) }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to load data' }) };
   }
 };

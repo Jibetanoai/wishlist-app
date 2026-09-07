@@ -92,7 +92,7 @@ function decorateLink(url) {
   return buildValueCommerceUrl(url);
 }
 
-const EMPTY_APP_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [] };
+const EMPTY_APP_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [], furusatolist: [] };
 let appData = { ...EMPTY_APP_DATA };
 let currentSection = 'wishlist';
 let editUnlocked = false;

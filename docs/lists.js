@@ -7,6 +7,7 @@ const SIMPLE_LISTS = {
   restaurantlist: { icon: '🍴', label: '飲食店', listEl: 'restaurantList', emptyEl: 'restaurantEmptyState', addBtn: 'addRestaurantBtn', placeholder: '例: 〇〇焼肉店' },
   hotellist: { icon: '🏨', label: 'ホテル', listEl: 'hotelList', emptyEl: 'hotelEmptyState', addBtn: 'addHotelBtn', placeholder: '例: 〇〇リゾート' },
   cafelist: { icon: '☕', label: 'カフェ', listEl: 'cafeList', emptyEl: 'cafeEmptyState', addBtn: 'addCafeBtn', placeholder: '例: 〇〇珈琲' },
+  furusatolist: { icon: '🎁', label: 'ふるさと納税', listEl: 'furusatoList', emptyEl: 'furusatoEmptyState', addBtn: 'addFurusatoBtn', placeholder: '例: 宮崎県都城市 黒毛和牛', hasAmount: true },
 };
 
 function renderSimpleList(key) {
@@ -27,6 +28,7 @@ function renderSimpleList(key) {
       </label>
       <div class="simple-body">
         <div class="simple-title">${cfg.icon} ${escapeHtml(item.title)}</div>
+        ${cfg.hasAmount && item.amount != null ? `<div class="card-detail">寄付金額: ${Number(item.amount).toLocaleString()}円</div>` : ''}
         ${item.memo ? `<div class="card-detail">${escapeHtml(item.memo)}</div>` : ''}
         ${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="simple-link" onclick="event.stopPropagation()">🔗 関連リンク</a>` : ''}
       </div>
@@ -58,6 +60,7 @@ function openAddSimpleModal(key) {
   document.getElementById('simpleId').value = '';
   document.getElementById('simple_title').placeholder = SIMPLE_LISTS[key].placeholder || '';
   document.getElementById('simpleModalTitle').textContent = `${SIMPLE_LISTS[key].label}を追加`;
+  document.getElementById('simpleAmountLabel').hidden = !SIMPLE_LISTS[key].hasAmount;
   deleteSimpleBtn.hidden = true;
   simpleModalOverlay.hidden = false;
 }
@@ -66,9 +69,11 @@ function openSimpleModal(key, item) {
   currentSimpleListKey = key;
   document.getElementById('simpleId').value = item.id;
   document.getElementById('simple_title').value = item.title || '';
+  document.getElementById('simple_amount').value = item.amount ?? '';
   document.getElementById('simple_memo').value = item.memo || '';
   document.getElementById('simple_link').value = item.link || '';
   document.getElementById('simpleModalTitle').textContent = `${SIMPLE_LISTS[key].label}を編集`;
+  document.getElementById('simpleAmountLabel').hidden = !SIMPLE_LISTS[key].hasAmount;
   deleteSimpleBtn.hidden = false;
   simpleModalOverlay.hidden = false;
 }
@@ -88,8 +93,10 @@ simpleForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const key = currentSimpleListKey;
   const id = document.getElementById('simpleId').value;
+  const amountVal = document.getElementById('simple_amount').value;
   const body = {
     title: document.getElementById('simple_title').value,
+    amount: SIMPLE_LISTS[key].hasAmount && amountVal !== '' ? Number(amountVal) : null,
     memo: document.getElementById('simple_memo').value || null,
     link: document.getElementById('simple_link').value || null,
   };
