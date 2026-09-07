@@ -70,25 +70,25 @@ exports.handler = async (event) => {
   let res;
   try {
     res = await requestRakuten(`${RAKUTEN_PATH}?${params.toString()}`, referer, accessKey);
-  } catch {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+  } catch (err) {
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugItemCode: itemCode, debugError: String(err) }) };
   }
 
   if (res.statusCode < 200 || res.statusCode >= 300) {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugItemCode: itemCode, debugStatus: res.statusCode, debugBody: res.body }) };
   }
 
   let data;
   try {
     data = JSON.parse(res.body);
   } catch {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugItemCode: itemCode, debugParseFail: true, debugBody: res.body.slice(0, 500) }) };
   }
 
   const wrap = (data.Items || [])[0];
   const item = wrap && (wrap.Item || wrap);
   if (!item) {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugItemCode: itemCode, debugData: data }) };
   }
 
   return {
