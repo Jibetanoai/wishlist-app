@@ -60,16 +60,21 @@ async function saveData(sessionToken, data) {
 }
 
 async function fetchLinkPreview(url) {
+  // 楽天の商品ページは公式APIでitemCode検索した方が確実に取れる
+  // (ページを直接読みに行く方式だとブロックされて取得できないため)。
+  const endpoint = /(^|\.)rakuten\.co\.jp$/i.test(new URL(url).hostname)
+    ? '/.netlify/functions/rakuten-item-lookup'
+    : '/.netlify/functions/link-preview';
   try {
-    const res = await fetch('/.netlify/functions/link-preview', {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-    if (!res.ok) return { title: null, image: null };
+    if (!res.ok) return { title: null, image: null, price: null };
     return res.json();
   } catch {
-    return { title: null, image: null };
+    return { title: null, image: null, price: null };
   }
 }
 
@@ -96,9 +101,11 @@ async function fetchLinkPreview(url) {
   form.hidden = false;
   titleInput.focus();
 
-  // ページのog:title/og:imageを軽く見に行って、分かりやすい名前と画像を自動で埋める
-  // (すでにOS側からタイトルが渡ってきてる場合はそれを優先し、上書きしない)。
+  // 楽天なら公式APIで、それ以外はページのog:title/og:imageを軽く見に行って、
+  // 分かりやすい名前・画像・(分かれば)価格を自動で埋める(すでにOS側から
+  // タイトルが渡ってきてる場合はそれを優先し、上書きしない)。
   let previewImage = null;
+  let previewPrice = null;
   const statusEl = document.getElementById('shareStatus');
   statusEl.hidden = false;
   statusEl.textContent = '商品情報を確認中…';
@@ -110,6 +117,7 @@ async function fetchLinkPreview(url) {
     imagePreviewEl.src = preview.image;
     imagePreviewEl.hidden = false;
   }
+  if (preview.price != null) previewPrice = preview.price;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -127,7 +135,7 @@ async function fetchLinkPreview(url) {
         merged.wishlist = merged.wishlist || [];
         merged.wishlist.push({
           id: newId(), source: 'other', title: enteredTitle || titleFromUrl(url),
-          price: null, image: previewImage, url, memo: null, priceHistory: [], addedAt: new Date().toISOString(),
+          price: previewPrice, image: previewImage, url, memo: null, priceHistory: [], addedAt: new Date().toISOString(),
         });
       } else if (SIMPLE_LIST_KEYS.includes(category)) {
         merged[category] = merged[category] || [];
