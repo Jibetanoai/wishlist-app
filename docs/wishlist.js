@@ -40,7 +40,9 @@ function renderWishlist() {
     const low = lowestPrice(item);
     const isLowest = item.price != null && low != null && item.price <= low;
     const buyUrl = decorateLink(item.url);
-    const keepaUrl = item.source === 'amazon' ? buildKeepaUrl(item.url) : null;
+    // ソースが"amazon"タブ経由かどうかに関わらず、URLからASINが取れる
+    // Amazon商品ならKeepaリンクを出す(共有追加やその他タブ経由でも同じ)。
+    const keepaUrl = buildKeepaUrl(item.url);
 
     const card = document.createElement('div');
     card.className = 'wish-card';
