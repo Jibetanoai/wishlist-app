@@ -8,7 +8,7 @@ function lowestPrice(item) {
   return prices.length ? Math.min(...prices) : null;
 }
 
-const SOURCE_LABELS = { rakuten: '楽天市場', amazon: 'Amazon', other: 'その他' };
+const SOURCE_LABELS = { rakuten: '楽天市場', yahoo: 'Yahoo!ショッピング', amazon: 'Amazon', other: 'その他' };
 
 function renderWishlist() {
   const grid = document.getElementById('wishGrid');
@@ -119,6 +119,23 @@ document.getElementById('rakutenKeyword').addEventListener('keydown', (e) => {
   }
 });
 
+// 楽天市場とYahoo!ショッピングを同時に検索して、価格の安い順にまとめて表示する。
+// 片方のAPIが未設定/エラーでも、もう片方の結果だけは出せるようにしておく。
+async function searchOneSource(url, keyword, sourceLabel) {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword }),
+    });
+    const body = await res.json();
+    if (!res.ok) return { items: [], error: body.error || `${sourceLabel}の検索に失敗したよ` };
+    return { items: body.items || [] };
+  } catch {
+    return { items: [], error: `${sourceLabel}への通信に失敗したよ` };
+  }
+}
+
 document.getElementById('rakutenSearchBtn').addEventListener('click', async () => {
   const keyword = document.getElementById('rakutenKeyword').value.trim();
   if (!keyword) return;
@@ -127,50 +144,53 @@ document.getElementById('rakutenSearchBtn').addEventListener('click', async () =
   statusEl.hidden = false;
   statusEl.textContent = '検索中…';
   resultsEl.innerHTML = '';
-  try {
-    const res = await fetch('/.netlify/functions/rakuten-search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword }),
-    });
-    const body = await res.json();
-    if (!res.ok) throw new Error(body.error || '検索に失敗したよ');
-    statusEl.hidden = true;
-    if (!body.items || body.items.length === 0) {
-      resultsEl.innerHTML = '<p class="pl-row-empty">見つからなかったよ。別のキーワードで試してみて。</p>';
-      return;
-    }
-    resultsEl.innerHTML = body.items.map((item, idx) => `
-      <div class="rakuten-result-row" data-idx="${idx}">
-        ${item.image ? `<img src="${escapeHtml(item.image)}" alt="">` : '<div class="rakuten-result-noimg">🎁</div>'}
-        <div class="rakuten-result-body">
-          <div class="rakuten-result-name">${escapeHtml(item.name)}</div>
-          <div class="rakuten-result-price">${Number(item.price).toLocaleString()}円<span class="rakuten-result-shop">${escapeHtml(item.shopName || '')}</span></div>
-        </div>
-        <button type="button" class="btn btn-primary rakuten-add-btn" data-idx="${idx}">追加</button>
-      </div>
-    `).join('');
-    resultsEl.querySelectorAll('.rakuten-add-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const item = body.items[Number(btn.dataset.idx)];
-        const record = {
-          id: newId(), source: 'rakuten', title: item.name, price: item.price,
-          image: item.image, url: item.url, memo: null, priceHistory: [], addedAt: new Date().toISOString(),
-        };
-        appData.wishlist = appData.wishlist || [];
-        appData.wishlist.push(record);
-        try {
-          await saveData();
-          closeWishModal();
-          renderWishlist();
-        } catch (err) {
-          alert(err.message);
-        }
-      });
-    });
-  } catch (err) {
-    statusEl.textContent = err.message;
+
+  const [rakuten, yahoo] = await Promise.all([
+    searchOneSource('/.netlify/functions/rakuten-search', keyword, '楽天'),
+    searchOneSource('/.netlify/functions/yahoo-search', keyword, 'Yahoo!ショッピング'),
+  ]);
+
+  const items = [
+    ...rakuten.items.map((item) => ({ ...item, source: 'rakuten', sourceLabel: '楽天市場' })),
+    ...yahoo.items.map((item) => ({ ...item, source: 'yahoo', sourceLabel: 'Yahoo!ショッピング' })),
+  ].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+
+  const errors = [rakuten.error, yahoo.error].filter(Boolean);
+  statusEl.textContent = errors.join(' / ');
+  statusEl.hidden = errors.length === 0;
+
+  if (items.length === 0) {
+    resultsEl.innerHTML = '<p class="pl-row-empty">見つからなかったよ。別のキーワードで試してみて。</p>';
+    return;
   }
+  resultsEl.innerHTML = items.map((item, idx) => `
+    <div class="rakuten-result-row" data-idx="${idx}">
+      ${item.image ? `<img src="${escapeHtml(item.image)}" alt="">` : '<div class="rakuten-result-noimg">🎁</div>'}
+      <div class="rakuten-result-body">
+        <div class="rakuten-result-name">${escapeHtml(item.name)}</div>
+        <div class="rakuten-result-price">${Number(item.price).toLocaleString()}円<span class="rakuten-result-shop">${escapeHtml(item.sourceLabel)}${item.shopName ? ' ・ ' + escapeHtml(item.shopName) : ''}</span></div>
+      </div>
+      <button type="button" class="btn btn-primary rakuten-add-btn" data-idx="${idx}">追加</button>
+    </div>
+  `).join('');
+  resultsEl.querySelectorAll('.rakuten-add-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const item = items[Number(btn.dataset.idx)];
+      const record = {
+        id: newId(), source: item.source, title: item.name, price: item.price,
+        image: item.image, url: item.url, memo: null, priceHistory: [], addedAt: new Date().toISOString(),
+      };
+      appData.wishlist = appData.wishlist || [];
+      appData.wishlist.push(record);
+      try {
+        await saveData();
+        closeWishModal();
+        renderWishlist();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  });
 });
 
 wishForm.addEventListener('submit', async (e) => {
