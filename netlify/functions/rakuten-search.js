@@ -47,24 +47,6 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'キーワードを入力してね' }) };
   }
 
-  // デバッグ用: 実際にRefererヘッダーが外部に届いているか確認するための特殊キーワード。
-  if (keyword === '__debugheaders__') {
-    const referer = process.env.URL || 'https://famous-biscochitos-f8ab60.netlify.app';
-    const echoed = await new Promise((resolve, reject) => {
-      const req = https.request(
-        { hostname: 'httpbin.org', path: '/headers', method: 'GET', headers: { Referer: referer } },
-        (res) => {
-          let body = '';
-          res.on('data', (chunk) => { body += chunk; });
-          res.on('end', () => resolve(body));
-        },
-      );
-      req.on('error', reject);
-      req.end();
-    });
-    return { statusCode: 200, body: JSON.stringify({ debugEcho: JSON.parse(echoed), referer }) };
-  }
-
   const applicationId = process.env.RAKUTEN_APP_ID;
   const accessKey = process.env.RAKUTEN_ACCESS_KEY;
   const affiliateId = process.env.RAKUTEN_AFFILIATE_ID; // 未設定でも検索自体は動く
@@ -94,7 +76,7 @@ exports.handler = async (event) => {
   }
 
   if (res.statusCode < 200 || res.statusCode >= 300) {
-    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ', debugStatus: res.statusCode, debugBody: res.body, debugReferer: referer, debugEnvUrl: process.env.URL || null }) };
+    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ' }) };
   }
 
   const data = JSON.parse(res.body);
