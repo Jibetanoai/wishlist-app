@@ -12,6 +12,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -78,12 +80,6 @@ body {
 
 .app-section { padding: 16px 20px 60px; }
 
-.section-toolbar {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 14px;
-}
 .spacer { flex: 1; }
 
 .btn {
@@ -121,6 +117,21 @@ body {
   transition: box-shadow 0.15s ease;
 }
 .wish-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+
+.wish-card-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  background: none;
+  border: 2px dashed var(--border);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-family: inherit;
+  padding: 20px;
+}
+.wish-card-add:hover { border-color: var(--primary); background: rgba(224, 96, 126, 0.05); }
 
 .wish-image { width: 100%; height: 160px; object-fit: contain; background: #fff; display: block; }
 .wish-image-placeholder {
@@ -200,6 +211,18 @@ body {
 }
 .simple-row.done { opacity: 0.55; }
 .simple-row.done .simple-title { text-decoration: line-through; }
+
+.simple-row-add {
+  justify-content: center;
+  background: none;
+  border: 2px dashed var(--border);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.simple-row-add:hover { border-color: var(--primary); background: rgba(224, 96, 126, 0.05); }
 
 .task-check { padding-top: 2px; }
 .task-check input { width: 20px; height: 20px; }

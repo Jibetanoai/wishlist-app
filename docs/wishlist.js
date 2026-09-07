@@ -17,6 +17,14 @@ function renderWishlist() {
   emptyState.hidden = list.length !== 0;
   grid.innerHTML = '';
 
+  const addCard = document.createElement('button');
+  addCard.type = 'button';
+  addCard.className = 'wish-card wish-card-add edit-only';
+  addCard.hidden = !editUnlocked;
+  addCard.textContent = '＋ ほしい物を追加';
+  addCard.addEventListener('click', openAddWishModal);
+  grid.appendChild(addCard);
+
   list.slice().sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || '')).forEach((item) => {
     const low = lowestPrice(item);
     const isLowest = item.price != null && low != null && item.price <= low;
@@ -101,7 +109,6 @@ function closeWishModal() {
   document.querySelectorAll('#wishSourceTabs .tab').forEach((btn) => { btn.hidden = false; });
 }
 
-document.getElementById('addWishBtn').addEventListener('click', openAddWishModal);
 document.querySelectorAll('.js-close-wish').forEach((btn) => btn.addEventListener('click', closeWishModal));
 wishModalOverlay.addEventListener('click', (e) => { if (e.target === wishModalOverlay) closeWishModal(); });
 
