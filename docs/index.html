@@ -33,6 +33,7 @@
 <header class="app-header">
   <h1>🎁 ウィッシュリスト</h1>
   <div class="header-user">
+    <button id="inviteBtn" class="edit-mode-btn" title="友達にアプリを教える">🔗 招待</button>
     <img id="loggedInAvatar" class="header-avatar" alt="" hidden>
     <span id="loggedInName" class="header-user-name"></span>
     <button id="logoutBtn" class="edit-mode-btn">ログアウト</button>
@@ -54,6 +55,16 @@
 <!-- ============ ほしい物リスト ============ -->
 <section id="section-wishlist" class="app-section" hidden>
   <div id="wishTotal" class="list-total" hidden></div>
+  <div class="list-toolbar" id="wishSortBar" hidden>
+    <label class="sort-label">並び替え
+      <select id="wishSortSelect">
+        <option value="newest">追加順(新しい順)</option>
+        <option value="price_asc">価格が安い順</option>
+        <option value="price_desc">価格が高い順</option>
+        <option value="discount">値下がり中を上に</option>
+      </select>
+    </label>
+  </div>
   <div id="wishEmptyState" class="empty-state" hidden>まだ何も登録されてないよ。</div>
   <div id="wishGrid" class="card-grid"></div>
 </section>
@@ -189,6 +200,12 @@
       <label>関連リンク(あれば。地図・予約サイト・Amazon/楽天のリンクなど)
         <input type="text" id="simple_link">
       </label>
+      <img id="simpleImagePreview" alt="" hidden style="width:100%; max-height:180px; object-fit:contain; border-radius:10px; margin-bottom:12px; background:#fff;">
+      <label>画像URL(あれば)
+        <input type="text" id="simple_image">
+      </label>
+      <button type="button" id="simpleImageSearchBtn" class="btn" style="width:100%; margin-bottom:12px;">🔍 名前で画像を検索</button>
+      <div id="simpleImageResults" class="rakuten-results" style="margin-bottom:12px;"></div>
       <div class="modal-footer">
         <button type="button" id="deleteSimpleBtn" class="btn btn-danger" hidden>削除</button>
         <div class="spacer"></div>

@@ -8,6 +8,18 @@ function lowestPrice(item) {
   return prices.length ? Math.min(...prices) : null;
 }
 
+// 最初に記録された価格から現在価格までの変化率(値下がりならマイナス)。
+// 履歴がなければ0(変化なし扱い)にして、値下がり順ソートで自然に末尾に来るようにする。
+function priceChangePct(item) {
+  const history = item.priceHistory || [];
+  if (!history.length || item.price == null) return 0;
+  const first = history[0].price;
+  if (!first) return 0;
+  return ((item.price - first) / first) * 100;
+}
+
+let currentWishSort = 'newest';
+
 // priceHistory(過去の価格)+ 現在価格をまとめて時系列の折れ線グラフ(SVG)にする。
 // 値上がりは赤、値下がりは緑で、最初から最新までの変化率も表示する。
 function renderPriceHistoryChart(points) {
@@ -51,15 +63,18 @@ function renderWishlist() {
   emptyState.hidden = list.length !== 0;
   grid.innerHTML = '';
 
-  const pricedItems = list.filter((item) => item.price != null);
-  const unpricedCount = list.length - pricedItems.length;
+  const activeItems = list.filter((item) => !item.purchased);
+  const pricedItems = activeItems.filter((item) => item.price != null);
+  const unpricedCount = activeItems.length - pricedItems.length;
+  const purchasedCount = list.length - activeItems.length;
   if (list.length > 0) {
     const total = pricedItems.reduce((sum, item) => sum + Number(item.price), 0);
-    totalEl.innerHTML = `<span>合計金額(${pricedItems.length}件)${unpricedCount ? ` <span class="card-detail" style="display:inline;">・価格未登録${unpricedCount}件</span>` : ''}</span><strong>${total.toLocaleString()}円</strong>`;
+    totalEl.innerHTML = `<span>合計金額(${pricedItems.length}件)${unpricedCount ? ` <span class="card-detail" style="display:inline;">・価格未登録${unpricedCount}件</span>` : ''}${purchasedCount ? ` <span class="card-detail" style="display:inline;">・購入済み${purchasedCount}件</span>` : ''}</span><strong>${total.toLocaleString()}円</strong>`;
     totalEl.hidden = false;
   } else {
     totalEl.hidden = true;
   }
+  document.getElementById('wishSortBar').hidden = list.length === 0;
 
   const addCard = document.createElement('button');
   addCard.type = 'button';
@@ -69,7 +84,15 @@ function renderWishlist() {
   addCard.addEventListener('click', openAddWishModal);
   grid.appendChild(addCard);
 
-  list.slice().sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || '')).forEach((item) => {
+  const sorted = list.slice().sort((a, b) => {
+    if (!!a.purchased !== !!b.purchased) return a.purchased ? 1 : -1;
+    if (currentWishSort === 'price_asc') return (a.price ?? Infinity) - (b.price ?? Infinity);
+    if (currentWishSort === 'price_desc') return (b.price ?? -Infinity) - (a.price ?? -Infinity);
+    if (currentWishSort === 'discount') return priceChangePct(a) - priceChangePct(b);
+    return (b.addedAt || '').localeCompare(a.addedAt || '');
+  });
+
+  sorted.forEach((item) => {
     const low = lowestPrice(item);
     const isLowest = item.price != null && low != null && item.price <= low;
     const buyUrl = decorateLink(item.url);
@@ -78,8 +101,11 @@ function renderWishlist() {
     const keepaUrl = buildKeepaUrl(item.url);
 
     const card = document.createElement('div');
-    card.className = 'wish-card';
+    card.className = `wish-card${item.purchased ? ' purchased' : ''}`;
     card.innerHTML = `
+      <label class="wish-purchased-check" onclick="event.stopPropagation()">
+        <input type="checkbox" ${item.purchased ? 'checked' : ''} ${editUnlocked ? '' : 'disabled'}> 購入済み
+      </label>
       ${item.image ? `<img class="wish-image" src="${escapeHtml(item.image)}" alt="">` : '<div class="wish-image wish-image-placeholder">🎁</div>'}
       <div class="wish-body">
         <div class="wish-source-badge">${escapeHtml(SOURCE_LABELS[item.source] || 'その他')}</div>
@@ -93,9 +119,40 @@ function renderWishlist() {
       </div>
     `;
     card.addEventListener('click', () => { if (editUnlocked) openWishModal(item); });
+    card.querySelector('.wish-purchased-check input').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!editUnlocked) { e.preventDefault(); return; }
+      item.purchased = e.target.checked;
+      try {
+        await saveData();
+        renderWishlist();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
     grid.appendChild(card);
   });
 }
+
+document.getElementById('wishSortSelect').addEventListener('change', (e) => {
+  currentWishSort = e.target.value;
+  renderWishlist();
+});
+
+document.getElementById('inviteBtn').addEventListener('click', async () => {
+  const url = window.location.origin + '/';
+  const shareData = { title: 'ウィッシュリスト', text: 'このアプリで自分だけのほしい物リストを作れるよ!', url };
+  if (navigator.share) {
+    try { await navigator.share(shareData); } catch { /* キャンセルされても何もしない */ }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    alert('リンクをコピーしたよ。友達に貼って送ってね。');
+  } catch {
+    alert(url);
+  }
+});
 
 const wishModalOverlay = document.getElementById('wishModalOverlay');
 const wishForm = document.getElementById('wishForm');

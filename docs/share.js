@@ -203,7 +203,7 @@ async function fetchLinkPreview(url) {
         merged[category] = merged[category] || [];
         merged[category].push({
           id: newId(), done: false, title: enteredTitle || titleFromUrl(url),
-          amount: null, memo: null, link: url, addedAt: new Date().toISOString(),
+          amount: null, memo: null, link: url, image: previewImage, addedAt: new Date().toISOString(),
         });
       }
 

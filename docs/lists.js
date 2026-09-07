@@ -47,6 +47,7 @@ function renderSimpleList(key) {
       <label class="task-check">
         <input type="checkbox" ${item.done ? 'checked' : ''} ${editUnlocked ? '' : 'disabled'}>
       </label>
+      ${item.image ? `<img class="simple-thumb" src="${escapeHtml(item.image)}" alt="">` : ''}
       <div class="simple-body">
         <div class="simple-title">${cfg.icon} ${escapeHtml(item.title)}</div>
         ${cfg.hasAmount && item.amount != null ? `<div class="card-detail">寄付金額: ${Number(item.amount).toLocaleString()}円</div>` : ''}
@@ -80,6 +81,8 @@ function openAddSimpleModal(key) {
   simpleForm.reset();
   document.getElementById('simpleId').value = '';
   document.getElementById('simple_title').placeholder = SIMPLE_LISTS[key].placeholder || '';
+  document.getElementById('simpleImagePreview').hidden = true;
+  document.getElementById('simpleImageResults').innerHTML = '';
   document.getElementById('simpleModalTitle').textContent = `${SIMPLE_LISTS[key].label}を追加`;
   document.getElementById('simpleAmountLabel').hidden = !SIMPLE_LISTS[key].hasAmount;
   deleteSimpleBtn.hidden = true;
@@ -93,6 +96,10 @@ function openSimpleModal(key, item) {
   document.getElementById('simple_amount').value = item.amount ?? '';
   document.getElementById('simple_memo').value = item.memo || '';
   document.getElementById('simple_link').value = item.link || '';
+  document.getElementById('simple_image').value = item.image || '';
+  const previewEl = document.getElementById('simpleImagePreview');
+  if (item.image) { previewEl.src = item.image; previewEl.hidden = false; } else { previewEl.hidden = true; }
+  document.getElementById('simpleImageResults').innerHTML = '';
   document.getElementById('simpleModalTitle').textContent = `${SIMPLE_LISTS[key].label}を編集`;
   document.getElementById('simpleAmountLabel').hidden = !SIMPLE_LISTS[key].hasAmount;
   deleteSimpleBtn.hidden = false;
@@ -106,6 +113,53 @@ function closeSimpleModal() {
 document.querySelectorAll('.js-close-simple').forEach((btn) => btn.addEventListener('click', closeSimpleModal));
 simpleModalOverlay.addEventListener('click', (e) => { if (e.target === simpleModalOverlay) closeSimpleModal(); });
 
+document.getElementById('simpleImageSearchBtn').addEventListener('click', async (e) => {
+  const keyword = document.getElementById('simple_title').value.trim();
+  if (!keyword) { alert('先に名前を入力してね。'); return; }
+  const btn = e.currentTarget;
+  const resultsEl = document.getElementById('simpleImageResults');
+  btn.disabled = true;
+  btn.textContent = '検索中…';
+  resultsEl.innerHTML = '';
+
+  const [rakuten, yahoo] = await Promise.all([
+    searchOneSource('/.netlify/functions/rakuten-search', keyword, '楽天'),
+    searchOneSource('/.netlify/functions/yahoo-search', keyword, 'Yahoo!ショッピング'),
+  ]);
+  btn.disabled = false;
+  btn.textContent = '🔍 名前で画像を検索';
+
+  const items = [
+    ...rakuten.items.map((item) => ({ ...item, sourceLabel: '楽天市場' })),
+    ...yahoo.items.map((item) => ({ ...item, sourceLabel: 'Yahoo!ショッピング' })),
+  ].filter((item) => item.image).slice(0, 12);
+
+  if (items.length === 0) {
+    resultsEl.innerHTML = '<p class="pl-row-empty">画像付きの候補が見つからなかったよ。</p>';
+    return;
+  }
+  resultsEl.innerHTML = items.map((item, idx) => `
+    <div class="rakuten-result-row" data-idx="${idx}">
+      <img src="${escapeHtml(item.image)}" alt="">
+      <div class="rakuten-result-body">
+        <div class="rakuten-result-name">${escapeHtml(item.name)}</div>
+        <div class="rakuten-result-price">${Number(item.price).toLocaleString()}円<span class="rakuten-result-shop">${escapeHtml(item.sourceLabel)}</span></div>
+      </div>
+      <button type="button" class="btn btn-primary rakuten-add-btn" data-idx="${idx}">これ</button>
+    </div>
+  `).join('');
+  resultsEl.querySelectorAll('.rakuten-add-btn').forEach((pickBtn) => {
+    pickBtn.addEventListener('click', () => {
+      const item = items[Number(pickBtn.dataset.idx)];
+      document.getElementById('simple_image').value = item.image;
+      const previewEl = document.getElementById('simpleImagePreview');
+      previewEl.src = item.image;
+      previewEl.hidden = false;
+      resultsEl.innerHTML = '';
+    });
+  });
+});
+
 simpleForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const key = currentSimpleListKey;
@@ -116,6 +170,7 @@ simpleForm.addEventListener('submit', async (e) => {
     amount: SIMPLE_LISTS[key].hasAmount && amountVal !== '' ? Number(amountVal) : null,
     memo: document.getElementById('simple_memo').value || null,
     link: document.getElementById('simple_link').value || null,
+    image: document.getElementById('simple_image').value || null,
   };
   appData[key] = appData[key] || [];
   if (id) {
