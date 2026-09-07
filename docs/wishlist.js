@@ -201,12 +201,18 @@ wishForm.addEventListener('submit', async (e) => {
   const id = document.getElementById('wishId').value;
   const source = document.getElementById('wishSource').value;
   const newPrice = document.getElementById('wish_price').value !== '' ? Number(document.getElementById('wish_price').value) : null;
+  const url = document.getElementById('wish_url').value || null;
+  const enteredTitle = document.getElementById('wish_title').value.trim();
+  if (!enteredTitle && !url) {
+    alert('商品名かURLのどちらかは入れてね。');
+    return;
+  }
   const body = {
     source,
-    title: document.getElementById('wish_title').value,
+    title: enteredTitle || titleFromUrl(url),
     price: newPrice,
     image: document.getElementById('wish_image').value || null,
-    url: document.getElementById('wish_url').value || null,
+    url,
     memo: document.getElementById('wish_memo').value || null,
   };
 

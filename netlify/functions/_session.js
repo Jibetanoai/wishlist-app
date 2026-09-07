@@ -2,6 +2,15 @@
 // 署名が正しくなければ(=本人以外がuserIdを偽装しようとした場合)nullを返す。
 const crypto = require('crypto');
 
+function sign(message, secret) {
+  const hmac = crypto.createHmac('sha256', secret).update(message).digest('hex');
+  return `${Buffer.from(message).toString('base64url')}.${hmac}`;
+}
+
+function signSessionToken(userId) {
+  return sign(userId, process.env.SESSION_SECRET);
+}
+
 function verifySessionToken(sessionToken) {
   const secret = process.env.SESSION_SECRET;
   if (!secret || !sessionToken || typeof sessionToken !== 'string') return null;
@@ -27,4 +36,4 @@ function verifySessionToken(sessionToken) {
   return userId;
 }
 
-module.exports = { verifySessionToken };
+module.exports = { signSessionToken, verifySessionToken };

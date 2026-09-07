@@ -14,6 +14,15 @@ function localDateStr(d = new Date()) {
 // Amazonのアソシエイトタグ。公開情報(URLのパラメータ)なのでクライアント側に置いてOK。
 const AMAZON_ASSOCIATE_TAG = 'kwishlist-22';
 
+// URLだけ貼って商品名を空欄にした時のフォールバック名。
+function titleFromUrl(url) {
+  try {
+    return `${new URL(url).hostname.replace(/^www\./, '')}の商品`;
+  } catch {
+    return 'リンクから追加した商品';
+  }
+}
+
 function extractAsin(url) {
   if (!url) return null;
   const m = String(url).match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10})/i);

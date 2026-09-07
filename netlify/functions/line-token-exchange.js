@@ -9,12 +9,7 @@
 // サーバー側は署名を検証してuserIdを取り出す(生のuserIdをクライアントから
 // そのまま送らせると、他人のuserIdを推測して指定するだけで他人のデータを
 // 読み書きできてしまうため)。
-const crypto = require('crypto');
-
-function signUserId(userId, secret) {
-  const hmac = crypto.createHmac('sha256', secret).update(userId).digest('hex');
-  return `${Buffer.from(userId).toString('base64url')}.${hmac}`;
-}
+const { signSessionToken } = require('./_session');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -77,7 +72,7 @@ exports.handler = async (event) => {
     return { statusCode: 502, body: JSON.stringify({ error: 'Profile fetch failed' }) };
   }
 
-  const sessionToken = signUserId(profile.userId, sessionSecret);
+  const sessionToken = signSessionToken(profile.userId);
 
   return {
     statusCode: 200,

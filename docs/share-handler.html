@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>リストに追加</title>
+<meta name="theme-color" content="#e0607e">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="login-screen">
+  <div class="login-card">
+    <div class="login-icon">🎁</div>
+    <h1>リストに追加</h1>
+
+    <div id="shareNotLoggedIn" hidden>
+      <p class="login-lead">追加するには、先にウィッシュリストアプリでログインしてね。</p>
+      <a href="/" class="btn btn-line" style="display:block; text-decoration:none;">アプリを開く</a>
+    </div>
+
+    <div id="shareNoUrl" hidden>
+      <p class="login-lead">追加するURLが見つからなかったよ。共有ボタンやショートカットからもう一度試してみてね。</p>
+      <a href="/" class="btn btn-line" style="display:block; text-decoration:none;">アプリを開く</a>
+    </div>
+
+    <form id="shareForm" hidden>
+      <p class="login-lead" id="shareUrlPreview" style="word-break: break-all;"></p>
+      <label>どのリストに追加する?
+        <select id="shareCategorySelect">
+          <option value="wishlist">🎁 ほしい物</option>
+          <option value="bucketlist">✅ やりたいこと</option>
+          <option value="travellist">✈️ 行きたい場所</option>
+          <option value="restaurantlist">🍴 行きたい飲食店</option>
+          <option value="hotellist">🏨 泊まりたいホテル</option>
+          <option value="cafelist">☕ 行きたいカフェ</option>
+          <option value="furusatolist">🎁 ふるさと納税</option>
+        </select>
+      </label>
+      <label>名前(空欄でもOK)
+        <input type="text" id="shareTitleInput" placeholder="わかりやすい名前があれば">
+      </label>
+      <button type="submit" id="shareSaveBtn" class="btn btn-primary" style="width:100%;">リストに追加する</button>
+      <p id="shareStatus" class="login-error" hidden></p>
+    </form>
+
+    <div id="shareDone" hidden>
+      <p class="login-lead">✅ リストに追加したよ!</p>
+      <a href="/" class="btn btn-line" style="display:block; text-decoration:none;">アプリで見る</a>
+    </div>
+  </div>
+</div>
+
+<script src="share.js"></script>
+</body>
+</html>
