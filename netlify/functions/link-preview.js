@@ -5,7 +5,10 @@
 // title/imageともnullを返すだけにしておく。
 const https = require('https');
 
-function fetchHtml(url) {
+// Netlify Functionsの実行時間の上限(だいたい10秒)を超えてプロセスごと
+// 強制終了されないよう、リダイレクトを何度も追いかけても合計の残り時間内に
+// 収まるようにする(deadlineで管理し、超えそうならそこで諦める)。
+function fetchHtml(url, deadline, hopsLeft = 3) {
   return new Promise((resolve, reject) => {
     let target;
     try {
@@ -16,6 +19,11 @@ function fetchHtml(url) {
     }
     if (target.protocol !== 'https:' && target.protocol !== 'http:') {
       reject(new Error('unsupported protocol'));
+      return;
+    }
+    const remaining = deadline - Date.now();
+    if (remaining < 500) {
+      reject(new Error('deadline exceeded'));
       return;
     }
     const lib = target.protocol === 'https:' ? https : require('http');
@@ -29,10 +37,9 @@ function fetchHtml(url) {
         },
       },
       (res) => {
-        // リダイレクトは1回だけ追いかける(商品リンクは短縮URL経由のことが多いため)。
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && hopsLeft > 0) {
           res.resume();
-          fetchHtml(new URL(res.headers.location, target).toString()).then(resolve, reject);
+          fetchHtml(new URL(res.headers.location, target).toString(), deadline, hopsLeft - 1).then(resolve, reject);
           return;
         }
         let body = '';
@@ -46,7 +53,7 @@ function fetchHtml(url) {
       },
     );
     req.on('error', reject);
-    req.setTimeout(9000, () => req.destroy(new Error('timeout')));
+    req.setTimeout(Math.min(6000, remaining), () => req.destroy(new Error('timeout')));
     req.end();
   });
 }
@@ -141,24 +148,29 @@ exports.handler = async (event) => {
 
   let result;
   try {
-    result = await fetchHtml(url);
+    result = await fetchHtml(url, Date.now() + 8000);
   } catch {
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, price: null }) };
   }
 
-  const html = result.body;
-  const titleTagMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const rawTitle = extractMeta(html, ['og:title', 'twitter:title']) || (titleTagMatch ? titleTagMatch[1] : null);
-  const rawImage = extractMeta(html, ['og:image', 'twitter:image']);
-  const price = extractPrice(html);
+  try {
+    const html = result.body;
+    const titleTagMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    const rawTitle = extractMeta(html, ['og:title', 'twitter:title']) || (titleTagMatch ? titleTagMatch[1] : null);
+    const rawImage = extractMeta(html, ['og:image', 'twitter:image']);
+    const price = extractPrice(html);
 
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: rawTitle ? decodeEntities(rawTitle).trim().slice(0, 200) : null,
-      image: rawImage || null,
-      price,
-    }),
-  };
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: rawTitle ? decodeEntities(rawTitle).trim().slice(0, 200) : null,
+        image: rawImage || null,
+        price,
+      }),
+    };
+  } catch {
+    // ページの中身の解析でここまで来て失敗しても、致命的にはしない。
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, price: null }) };
+  }
 };
