@@ -196,6 +196,50 @@ document.getElementById('rakutenSearchBtn').addEventListener('click', async (e) 
   });
 });
 
+document.getElementById('wishImageSearchBtn').addEventListener('click', async (e) => {
+  const keyword = document.getElementById('wish_title').value.trim();
+  if (!keyword) { alert('先に商品名を入力してね。'); return; }
+  const btn = e.currentTarget;
+  const resultsEl = document.getElementById('wishImageResults');
+  btn.disabled = true;
+  btn.textContent = '検索中…';
+  resultsEl.innerHTML = '';
+
+  const [rakuten, yahoo] = await Promise.all([
+    searchOneSource('/.netlify/functions/rakuten-search', keyword, '楽天'),
+    searchOneSource('/.netlify/functions/yahoo-search', keyword, 'Yahoo!ショッピング'),
+  ]);
+  btn.disabled = false;
+  btn.textContent = '🔍 商品名で画像を検索';
+
+  const items = [
+    ...rakuten.items.map((item) => ({ ...item, sourceLabel: '楽天市場' })),
+    ...yahoo.items.map((item) => ({ ...item, sourceLabel: 'Yahoo!ショッピング' })),
+  ].filter((item) => item.image).slice(0, 12);
+
+  if (items.length === 0) {
+    resultsEl.innerHTML = '<p class="pl-row-empty">画像付きの候補が見つからなかったよ。</p>';
+    return;
+  }
+  resultsEl.innerHTML = items.map((item, idx) => `
+    <div class="rakuten-result-row" data-idx="${idx}">
+      <img src="${escapeHtml(item.image)}" alt="">
+      <div class="rakuten-result-body">
+        <div class="rakuten-result-name">${escapeHtml(item.name)}</div>
+        <div class="rakuten-result-price">${Number(item.price).toLocaleString()}円<span class="rakuten-result-shop">${escapeHtml(item.sourceLabel)}</span></div>
+      </div>
+      <button type="button" class="btn btn-primary rakuten-add-btn" data-idx="${idx}">これ</button>
+    </div>
+  `).join('');
+  resultsEl.querySelectorAll('.rakuten-add-btn').forEach((pickBtn) => {
+    pickBtn.addEventListener('click', () => {
+      const item = items[Number(pickBtn.dataset.idx)];
+      document.getElementById('wish_image').value = item.image;
+      resultsEl.innerHTML = '';
+    });
+  });
+});
+
 wishForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = document.getElementById('wishId').value;

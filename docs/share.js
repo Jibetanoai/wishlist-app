@@ -11,6 +11,27 @@ function newId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str ?? '';
+  return div.innerHTML;
+}
+
+async function searchOneSource(url, keyword, sourceLabel) {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword }),
+    });
+    const body = await res.json();
+    if (!res.ok) return { items: [], error: body.error || `${sourceLabel}の検索に失敗したよ` };
+    return { items: body.items || [] };
+  } catch {
+    return { items: [], error: `${sourceLabel}への通信に失敗したよ` };
+  }
+}
+
 function titleFromUrl(url) {
   try {
     return `${new URL(url).hostname.replace(/^www\./, '')}の商品`;
@@ -113,6 +134,52 @@ async function fetchLinkPreview(url) {
     imagePreviewEl.hidden = false;
   }
   if (preview.price != null) previewPrice = preview.price;
+
+  document.getElementById('shareImageSearchBtn').addEventListener('click', async (e) => {
+    const keyword = titleInput.value.trim();
+    if (!keyword) { alert('先に名前を入力してね。'); return; }
+    const btn = e.currentTarget;
+    const resultsEl = document.getElementById('shareImageResults');
+    btn.disabled = true;
+    btn.textContent = '検索中…';
+    resultsEl.innerHTML = '';
+
+    const [rakuten, yahoo] = await Promise.all([
+      searchOneSource('/.netlify/functions/rakuten-search', keyword, '楽天'),
+      searchOneSource('/.netlify/functions/yahoo-search', keyword, 'Yahoo!ショッピング'),
+    ]);
+    btn.disabled = false;
+    btn.textContent = '🔍 この名前で画像を検索';
+
+    const items = [
+      ...rakuten.items.map((item) => ({ ...item, sourceLabel: '楽天市場' })),
+      ...yahoo.items.map((item) => ({ ...item, sourceLabel: 'Yahoo!ショッピング' })),
+    ].filter((item) => item.image).slice(0, 12);
+
+    if (items.length === 0) {
+      resultsEl.innerHTML = '<p class="pl-row-empty">画像付きの候補が見つからなかったよ。</p>';
+      return;
+    }
+    resultsEl.innerHTML = items.map((item, idx) => `
+      <div class="rakuten-result-row" data-idx="${idx}">
+        <img src="${escapeHtml(item.image)}" alt="">
+        <div class="rakuten-result-body">
+          <div class="rakuten-result-name">${escapeHtml(item.name)}</div>
+          <div class="rakuten-result-price">${Number(item.price).toLocaleString()}円<span class="rakuten-result-shop">${escapeHtml(item.sourceLabel)}</span></div>
+        </div>
+        <button type="button" class="btn btn-primary rakuten-add-btn" data-idx="${idx}">これ</button>
+      </div>
+    `).join('');
+    resultsEl.querySelectorAll('.rakuten-add-btn').forEach((pickBtn) => {
+      pickBtn.addEventListener('click', () => {
+        const item = items[Number(pickBtn.dataset.idx)];
+        previewImage = item.image;
+        imagePreviewEl.src = item.image;
+        imagePreviewEl.hidden = false;
+        resultsEl.innerHTML = '';
+      });
+    });
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
