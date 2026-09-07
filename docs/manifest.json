@@ -1,0 +1,13 @@
+{
+  "name": "ウィッシュリスト",
+  "short_name": "ウィッシュリスト",
+  "description": "ほしい物・やりたいこと・行きたい場所をまとめて共有できるリストアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6f7",
+  "theme_color": "#e0607e",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

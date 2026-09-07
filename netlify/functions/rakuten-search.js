@@ -59,8 +59,8 @@ exports.handler = async (event) => {
     applicationId,
     accessKey,
     keyword,
-    hits: '10',
-    sort: '+itemPrice',
+    hits: '20',
+    sort: 'standard', // 価格の安い順だと関係ない安物アクセサリーばかり出るため、関連度順にする
     format: 'json',
   });
   if (affiliateId) params.set('affiliateId', affiliateId);

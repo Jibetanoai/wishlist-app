@@ -112,6 +112,13 @@ function closeWishModal() {
 document.querySelectorAll('.js-close-wish').forEach((btn) => btn.addEventListener('click', closeWishModal));
 wishModalOverlay.addEventListener('click', (e) => { if (e.target === wishModalOverlay) closeWishModal(); });
 
+document.getElementById('rakutenKeyword').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('rakutenSearchBtn').click();
+  }
+});
+
 document.getElementById('rakutenSearchBtn').addEventListener('click', async () => {
   const keyword = document.getElementById('rakutenKeyword').value.trim();
   if (!keyword) return;
