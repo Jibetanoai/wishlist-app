@@ -75,7 +75,7 @@ exports.handler = async (event) => {
   }
 
   if (res.statusCode < 200 || res.statusCode >= 300) {
-    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ', debugStatus: res.statusCode, debugBody: res.body }) };
+    return { statusCode: 502, body: JSON.stringify({ error: '楽天からエラーが返ってきたよ', debugStatus: res.statusCode, debugBody: res.body, debugReferer: referer, debugEnvUrl: process.env.URL || null }) };
   }
 
   const data = JSON.parse(res.body);
