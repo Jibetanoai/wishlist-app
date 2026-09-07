@@ -44,12 +44,24 @@ function fetchHtml(url, deadline, hopsLeft = 3) {
         }
         let body = '';
         let size = 0;
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          resolve({ statusCode: res.statusCode, headers: res.headers, body });
+        };
         res.on('data', (chunk) => {
           size += chunk.length;
-          if (size > 500000) { req.destroy(); return; } // 500KBで打ち切り
           body += chunk;
+          if (size > 500000) {
+            // 500KBに達したらそこで打ち切る。destroy()すると'end'が
+            // 来ない場合があるため、ここで確定させてしまう。
+            req.destroy();
+            finish();
+          }
         });
-        res.on('end', () => resolve({ statusCode: res.statusCode, headers: res.headers, body }));
+        res.on('end', finish);
+        res.on('close', finish);
       },
     );
     req.on('error', reject);
@@ -78,11 +90,19 @@ function extractPrice(html) {
     if (!Number.isNaN(n) && n > 0) return Math.round(n);
   }
 
-  const scriptMatches = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
-  for (const match of scriptMatches) {
+  // 巨大なJSON-LD(何百件もの商品バリエーションを含むカタログデータ等)を
+  // 同期的にフルパースすると処理が固まって関数ごと落ちることがあるため、
+  // ブロック数・サイズ・配列の走査件数のすべてに上限を設けて安全にする。
+  const scriptRegex = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match;
+  let scriptCount = 0;
+  while ((match = scriptRegex.exec(html)) && scriptCount < 5) {
+    scriptCount++;
+    const raw = match[1];
+    if (raw.length > 200000) continue; // 巨大すぎるブロックはスキップ
     let data;
     try {
-      data = JSON.parse(match[1]);
+      data = JSON.parse(raw);
     } catch {
       continue;
     }
@@ -93,9 +113,9 @@ function extractPrice(html) {
 }
 
 function findPriceInJsonLd(node, depth = 0) {
-  if (!node || depth > 6) return null;
+  if (!node || depth > 5) return null;
   if (Array.isArray(node)) {
-    for (const item of node) {
+    for (const item of node.slice(0, 20)) {
       const p = findPriceInJsonLd(item, depth + 1);
       if (p != null) return p;
     }
