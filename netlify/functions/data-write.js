@@ -32,6 +32,6 @@ exports.handler = async (event) => {
     await store.setJSON('main', data);
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
   } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to save data', debug: String(err && err.message || err) }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to save data' }) };
   }
 };
