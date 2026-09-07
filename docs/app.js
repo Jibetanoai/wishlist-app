@@ -65,6 +65,7 @@ const VALUECOMMERCE_PIDS = {
   'travel.yahoo.co.jp': '892693515', // Yahoo!トラベル
   'his-j.com': '892693516', // HIS(海外旅行)
   'rlx.jp': '892693517', // Relux(高級ホテル・旅館予約)
+  'jal.co.jp': '892693518', // ジャルパック(JALの国内・海外ツアー)
 };
 
 // バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
