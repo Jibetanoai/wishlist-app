@@ -1,7 +1,7 @@
-// リストデータの書き込み。パスコードが合ってる時だけ書き込みを許可する。
-// パスコードはNetlifyの環境変数(EDIT_PASSCODE)にだけ保存し、クライアント側コードには
-// 一切書かない。閲覧は誰でもできるが、編集はKさんだけができるようにするための仕組み。
+// ログイン中のユーザー本人のリストデータを書き込む。セッショントークンから
+// userIdを検証し、そのユーザー専用のドキュメントにだけ書き込む。
 const { getWishlistStore } = require('./_blobStore');
+const { verifySessionToken } = require('./_session');
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -15,21 +15,19 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { passcode, data } = payload;
-  const expected = process.env.EDIT_PASSCODE;
-  if (!expected) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Server not configured' }) };
+  const userId = verifySessionToken(payload.sessionToken);
+  if (!userId) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'ログインが必要だよ' }) };
   }
-  if (!passcode || passcode !== expected) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Wrong passcode' }) };
-  }
+
+  const { data } = payload;
   if (!data || typeof data !== 'object') {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing data' }) };
   }
 
   try {
     const store = getWishlistStore();
-    await store.setJSON('main', data);
+    await store.setJSON(`user:${userId}`, data);
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
   } catch (err) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to save data' }) };

@@ -99,26 +99,17 @@ function decorateLink(url) {
 const EMPTY_APP_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [], furusatolist: [] };
 let appData = { ...EMPTY_APP_DATA };
 let currentSection = 'wishlist';
+// ログインしていれば常に自分専用のデータを編集できる(共有パスコードのような
+// 別の解錠操作はもう無い)。wishlist.js/lists.jsではこの値で追加・編集UIの
+// 表示可否を判定している。
 let editUnlocked = false;
 
-const EDIT_PASSCODE_KEY = 'wishlist_edit_passcode';
-
-function getSavedPasscode() {
-  try {
-    return sessionStorage.getItem(EDIT_PASSCODE_KEY) || '';
-  } catch {
-    return '';
-  }
-}
-
-function setSavedPasscode(v) {
-  try {
-    sessionStorage.setItem(EDIT_PASSCODE_KEY, v);
-  } catch { /* noop */ }
-}
-
 async function fetchData() {
-  const res = await fetch('/.netlify/functions/data-get');
+  const res = await fetch('/.netlify/functions/data-get', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionToken: currentUser.sessionToken }),
+  });
   if (!res.ok) throw new Error('データの読み込みに失敗したよ');
   return res.json();
 }
@@ -127,17 +118,15 @@ async function saveData() {
   const res = await fetch('/.netlify/functions/data-write', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ passcode: getSavedPasscode(), data: appData }),
+    body: JSON.stringify({ sessionToken: currentUser.sessionToken, data: appData }),
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error === 'Wrong passcode' ? 'パスコードが違うみたいで保存できなかったよ' : '保存に失敗したよ');
+    throw new Error('保存に失敗したよ');
   }
 }
 
 function updateEditUi() {
   document.querySelectorAll('.edit-only').forEach((el) => { el.hidden = !editUnlocked; });
-  document.getElementById('editModeBtn').textContent = editUnlocked ? '🔓 編集中' : '🔒 編集';
 }
 
 function switchSection(name) {
@@ -158,50 +147,6 @@ document.getElementById('sectionNav').addEventListener('click', (e) => {
   switchSection(btn.dataset.section);
 });
 
-const editUnlockModalOverlay = document.getElementById('editUnlockModalOverlay');
-document.getElementById('editModeBtn').addEventListener('click', () => {
-  if (editUnlocked) {
-    editUnlocked = false;
-    setSavedPasscode('');
-    updateEditUi();
-    return;
-  }
-  document.getElementById('editPasscodeInput').value = '';
-  document.getElementById('editUnlockError').hidden = true;
-  editUnlockModalOverlay.hidden = false;
-});
-document.querySelectorAll('.js-close-unlock').forEach((btn) => btn.addEventListener('click', () => {
-  editUnlockModalOverlay.hidden = true;
-}));
-editUnlockModalOverlay.addEventListener('click', (e) => {
-  if (e.target === editUnlockModalOverlay) editUnlockModalOverlay.hidden = true;
-});
-document.getElementById('editUnlockForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const passcode = document.getElementById('editPasscodeInput').value;
-  const errorEl = document.getElementById('editUnlockError');
-  try {
-    const res = await fetch('/.netlify/functions/verify-passcode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ passcode }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      errorEl.textContent = body.error === 'Wrong passcode' ? 'パスコードが違うみたい。' : '確認に失敗したよ。ネット接続を確認してね。';
-      errorEl.hidden = false;
-      return;
-    }
-    setSavedPasscode(passcode);
-    editUnlocked = true;
-    editUnlockModalOverlay.hidden = true;
-    updateEditUi();
-  } catch {
-    errorEl.textContent = '確認に失敗したよ。ネット接続を確認してね。';
-    errorEl.hidden = false;
-  }
-});
-
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   document.querySelectorAll('.modal-overlay').forEach((overlay) => {
@@ -209,7 +154,10 @@ document.addEventListener('keydown', (e) => {
   });
 });
 
-async function init() {
+// auth.jsがログイン確認できたタイミングで呼ばれる(未ログインの間はデータを
+// 一切取得しない)。
+async function onAuthReady() {
+  document.getElementById('loadingState').hidden = false;
   try {
     appData = await fetchData();
   } catch {
@@ -217,8 +165,7 @@ async function init() {
     alert('データの読み込みに失敗したよ。ネット接続を確認して再読み込みしてね。');
   }
   document.getElementById('loadingState').hidden = true;
+  editUnlocked = true;
   updateEditUi();
   switchSection('wishlist');
 }
-
-init();

@@ -15,9 +15,25 @@
 </head>
 <body>
 
+<!-- ============ ログイン画面 ============ -->
+<div id="loginScreen" class="login-screen" hidden>
+  <div class="login-card">
+    <div class="login-icon">🎁</div>
+    <h1>ウィッシュリスト</h1>
+    <p class="login-lead">LINEでログインすると、あなただけのリストが使えるようになるよ。</p>
+    <button id="lineLoginBtn" class="btn btn-line">LINEでログイン</button>
+    <p id="loginError" class="login-error" hidden></p>
+  </div>
+</div>
+
+<div id="appRoot" hidden>
+
 <header class="app-header">
   <h1>🎁 ウィッシュリスト</h1>
-  <button id="editModeBtn" class="edit-mode-btn">🔒 編集</button>
+  <div class="header-user">
+    <span id="loggedInName" class="header-user-name"></span>
+    <button id="logoutBtn" class="edit-mode-btn">ログアウト</button>
+  </div>
 </header>
 
 <nav class="section-nav" id="sectionNav">
@@ -73,28 +89,6 @@
   <div id="furusatoEmptyState" class="empty-state" hidden>まだ何も登録されてないよ。</div>
   <div id="furusatoList" class="simple-list"></div>
 </section>
-
-<!-- ============ 編集モード解除モーダル ============ -->
-<div id="editUnlockModalOverlay" class="modal-overlay" hidden>
-  <div class="modal">
-    <div class="modal-header">
-      <h2>🔒 編集モード</h2>
-      <button class="icon-btn js-close-unlock" aria-label="閉じる">×</button>
-    </div>
-    <p class="disclaimer-note">編集にはパスコードが必要だよ。見るだけの人はこの画面を閉じてね。</p>
-    <form id="editUnlockForm">
-      <label>パスコード
-        <input type="password" id="editPasscodeInput" autocomplete="off" required>
-      </label>
-      <p id="editUnlockError" class="login-error" hidden>パスコードが違うみたい。</p>
-      <div class="modal-footer">
-        <div class="spacer"></div>
-        <button type="button" class="btn js-close-unlock">キャンセル</button>
-        <button type="submit" class="btn btn-primary">解除する</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <!-- ============ ほしい物モーダル ============ -->
 <div id="wishModalOverlay" class="modal-overlay" hidden>
@@ -179,8 +173,12 @@
   </div>
 </div>
 
+</div>
+
+<script src="auth.js"></script>
 <script src="app.js"></script>
 <script src="wishlist.js"></script>
 <script src="lists.js"></script>
+<script>initAuth();</script>
 </body>
 </html>
