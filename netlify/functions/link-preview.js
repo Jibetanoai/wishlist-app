@@ -90,11 +90,12 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
   }
 
+  const startedAt = Date.now();
   let result;
   try {
     result = await fetchHtml(url);
-  } catch {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+  } catch (err) {
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugError: String(err && err.message || err), debugMs: Date.now() - startedAt }) };
   }
 
   const html = result.body;
