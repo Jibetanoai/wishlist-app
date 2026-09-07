@@ -61,6 +61,54 @@ function extractMeta(html, names) {
   return null;
 }
 
+// ページに埋め込まれてる価格情報を探す。og:price:amountか、多くの通販サイトが
+// SEO用に載せているJSON-LD(schema.org Product/Offer)のpriceを見に行くだけで、
+// 商品データベースを読み取るような話ではない。
+function extractPrice(html) {
+  const ogPrice = extractMeta(html, ['og:price:amount', 'product:price:amount']);
+  if (ogPrice) {
+    const n = Number(String(ogPrice).replace(/[^\d.]/g, ''));
+    if (!Number.isNaN(n) && n > 0) return Math.round(n);
+  }
+
+  const scriptMatches = html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
+  for (const match of scriptMatches) {
+    let data;
+    try {
+      data = JSON.parse(match[1]);
+    } catch {
+      continue;
+    }
+    const price = findPriceInJsonLd(data);
+    if (price != null) return price;
+  }
+  return null;
+}
+
+function findPriceInJsonLd(node, depth = 0) {
+  if (!node || depth > 6) return null;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const p = findPriceInJsonLd(item, depth + 1);
+      if (p != null) return p;
+    }
+    return null;
+  }
+  if (typeof node !== 'object') return null;
+
+  if (node.price != null) {
+    const n = Number(String(node.price).replace(/[^\d.]/g, ''));
+    if (!Number.isNaN(n) && n > 0) return Math.round(n);
+  }
+  for (const key of ['offers', '@graph', 'itemOffered']) {
+    if (node[key] != null) {
+      const p = findPriceInJsonLd(node[key], depth + 1);
+      if (p != null) return p;
+    }
+  }
+  return null;
+}
+
 function decodeEntities(str) {
   return str
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -88,20 +136,21 @@ exports.handler = async (event) => {
   // 503またはタイムアウトになるだけなので、無駄に待たせずに最初から諦める
   // (ここは今まで通り手動入力してもらう)。
   if (/amazon\.co\.jp|rakuten\.co\.jp/i.test(url)) {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, price: null }) };
   }
 
   let result;
   try {
     result = await fetchHtml(url);
   } catch {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, price: null }) };
   }
 
   const html = result.body;
   const titleTagMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   const rawTitle = extractMeta(html, ['og:title', 'twitter:title']) || (titleTagMatch ? titleTagMatch[1] : null);
   const rawImage = extractMeta(html, ['og:image', 'twitter:image']);
+  const price = extractPrice(html);
 
   return {
     statusCode: 200,
@@ -109,6 +158,7 @@ exports.handler = async (event) => {
     body: JSON.stringify({
       title: rawTitle ? decodeEntities(rawTitle).trim().slice(0, 200) : null,
       image: rawImage || null,
+      price,
     }),
   };
 };
