@@ -25,7 +25,11 @@
     </div>
 
     <form id="shareForm" hidden>
-      <p class="login-lead" id="shareUrlPreview" style="word-break: break-all;"></p>
+      <img id="shareImagePreview" alt="" hidden style="width:100%; max-height:220px; object-fit:contain; border-radius:10px; margin-bottom:14px; background:#fff;">
+      <a id="shareUrlPreview" class="simple-link" style="display:block; margin-bottom:14px;" target="_blank" rel="noopener"></a>
+      <label>名前(後で編集もできるよ)
+        <input type="text" id="shareTitleInput" placeholder="例: ワイヤレスイヤホン">
+      </label>
       <label>どのリストに追加する?
         <select id="shareCategorySelect">
           <option value="wishlist">🎁 ほしい物</option>
@@ -36,9 +40,6 @@
           <option value="cafelist">☕ 行きたいカフェ</option>
           <option value="furusatolist">🎁 ふるさと納税</option>
         </select>
-      </label>
-      <label>名前(空欄でもOK)
-        <input type="text" id="shareTitleInput" placeholder="わかりやすい名前があれば">
       </label>
       <button type="submit" id="shareSaveBtn" class="btn btn-primary" style="width:100%;">リストに追加する</button>
       <p id="shareStatus" class="login-error" hidden></p>

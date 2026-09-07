@@ -59,7 +59,21 @@ async function saveData(sessionToken, data) {
   if (!res.ok) throw new Error('保存に失敗したよ');
 }
 
-(function init() {
+async function fetchLinkPreview(url) {
+  try {
+    const res = await fetch('/.netlify/functions/link-preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!res.ok) return { title: null, image: null };
+    return res.json();
+  } catch {
+    return { title: null, image: null };
+  }
+}
+
+(async function init() {
   const auth = loadAuth();
   const { url, title } = getSharedParams();
 
@@ -72,14 +86,33 @@ async function saveData(sessionToken, data) {
     return;
   }
 
-  document.getElementById('shareUrlPreview').textContent = url;
-  document.getElementById('shareTitleInput').value = title;
+  const previewEl = document.getElementById('shareUrlPreview');
+  previewEl.href = url;
+  previewEl.textContent = '🔗 内容を確認する(別タブで開く)';
+  const titleInput = document.getElementById('shareTitleInput');
+  const imagePreviewEl = document.getElementById('shareImagePreview');
+  titleInput.value = title;
   const form = document.getElementById('shareForm');
   form.hidden = false;
+  titleInput.focus();
+
+  // ページのog:title/og:imageを軽く見に行って、分かりやすい名前と画像を自動で埋める
+  // (すでにOS側からタイトルが渡ってきてる場合はそれを優先し、上書きしない)。
+  let previewImage = null;
+  const statusEl = document.getElementById('shareStatus');
+  statusEl.hidden = false;
+  statusEl.textContent = '商品情報を確認中…';
+  const preview = await fetchLinkPreview(url);
+  statusEl.hidden = true;
+  if (preview.title && !titleInput.value) titleInput.value = preview.title;
+  if (preview.image) {
+    previewImage = preview.image;
+    imagePreviewEl.src = preview.image;
+    imagePreviewEl.hidden = false;
+  }
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const statusEl = document.getElementById('shareStatus');
     const saveBtn = document.getElementById('shareSaveBtn');
     const category = document.getElementById('shareCategorySelect').value;
     const enteredTitle = document.getElementById('shareTitleInput').value.trim();
@@ -94,7 +127,7 @@ async function saveData(sessionToken, data) {
         merged.wishlist = merged.wishlist || [];
         merged.wishlist.push({
           id: newId(), source: 'other', title: enteredTitle || titleFromUrl(url),
-          price: null, image: null, url, memo: null, priceHistory: [], addedAt: new Date().toISOString(),
+          price: null, image: previewImage, url, memo: null, priceHistory: [], addedAt: new Date().toISOString(),
         });
       } else if (SIMPLE_LIST_KEYS.includes(category)) {
         merged[category] = merged[category] || [];
