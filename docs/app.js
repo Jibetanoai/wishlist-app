@@ -12,8 +12,7 @@ function localDateStr(d = new Date()) {
 }
 
 // Amazonのアソシエイトタグ。公開情報(URLのパラメータ)なのでクライアント側に置いてOK。
-// Kさんのアソシエイトタグが決まったらここに入れる。
-const AMAZON_ASSOCIATE_TAG = '';
+const AMAZON_ASSOCIATE_TAG = 'kwishlist-22';
 
 function extractAsin(url) {
   if (!url) return null;
