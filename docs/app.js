@@ -50,12 +50,36 @@ function buildRakutenAffiliateUrl(url) {
   return `https://hb.afl.rakuten.co.jp/hgc/${RAKUTEN_AFFILIATE_ID}/?pc=${encoded}&m=${encoded}`;
 }
 
-// URLの種類を判定して、Amazon・楽天グループのリンクにはアフィリエイトを自動で付ける。
+// バリューコマース(食べログ・ホットペッパーグルメ・一休.com・じゃらん等の窓口ASP)の
+// MyLink。サイトIDは全プログラム共通で、プログラム(広告主)ごとにpidが決まっている。
+// 新しく提携したら、対応するドメインとpidをここに追加していく。
+const VALUECOMMERCE_SID = '3780809';
+const VALUECOMMERCE_PIDS = {
+  'tabelog.com': '892693484', // 食べログ 飲食店ネット予約プログラム
+};
+
+// バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
+function buildValueCommerceUrl(url) {
+  let host;
+  try {
+    host = new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+  if (/valuecommerce\.com$/i.test(host)) return url; // 変換済み
+  const domain = Object.keys(VALUECOMMERCE_PIDS).find((d) => host === d || host.endsWith(`.${d}`));
+  if (!domain) return url;
+  const pid = VALUECOMMERCE_PIDS[domain];
+  return `https://ck.jp.ap.valuecommerce.com/servlet/referral?sid=${VALUECOMMERCE_SID}&pid=${pid}&vc_url=${encodeURIComponent(url)}`;
+}
+
+// URLの種類を判定して、Amazon・楽天グループ・バリューコマース対応サイトのリンクには
+// アフィリエイトを自動で付ける。
 function decorateLink(url) {
   if (!url) return null;
   if (/amazon\.co\.jp/i.test(url)) return buildAmazonAffiliateUrl(url);
   if (/(^|\.)rakuten\.co\.jp/i.test(url)) return buildRakutenAffiliateUrl(url);
-  return url;
+  return buildValueCommerceUrl(url);
 }
 
 const EMPTY_APP_DATA = { wishlist: [], bucketlist: [], travellist: [], restaurantlist: [], hotellist: [], cafelist: [] };
