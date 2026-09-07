@@ -179,17 +179,34 @@ editUnlockModalOverlay.addEventListener('click', (e) => {
 document.getElementById('editUnlockForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const passcode = document.getElementById('editPasscodeInput').value;
-  setSavedPasscode(passcode);
+  const errorEl = document.getElementById('editUnlockError');
   try {
-    // 実際に書き込みが通るかどうかで、パスコードが合ってるか確認する。
-    await saveData();
+    const res = await fetch('/.netlify/functions/verify-passcode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      errorEl.textContent = body.error === 'Wrong passcode' ? 'パスコードが違うみたい。' : '確認に失敗したよ。ネット接続を確認してね。';
+      errorEl.hidden = false;
+      return;
+    }
+    setSavedPasscode(passcode);
     editUnlocked = true;
     editUnlockModalOverlay.hidden = true;
     updateEditUi();
   } catch {
-    setSavedPasscode('');
-    document.getElementById('editUnlockError').hidden = false;
+    errorEl.textContent = '確認に失敗したよ。ネット接続を確認してね。';
+    errorEl.hidden = false;
   }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+    if (!overlay.hidden) overlay.hidden = true;
+  });
 });
 
 async function init() {

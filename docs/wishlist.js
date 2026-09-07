@@ -136,11 +136,13 @@ async function searchOneSource(url, keyword, sourceLabel) {
   }
 }
 
-document.getElementById('rakutenSearchBtn').addEventListener('click', async () => {
+document.getElementById('rakutenSearchBtn').addEventListener('click', async (e) => {
   const keyword = document.getElementById('rakutenKeyword').value.trim();
   if (!keyword) return;
+  const btn = e.currentTarget;
   const statusEl = document.getElementById('rakutenSearchStatus');
   const resultsEl = document.getElementById('rakutenResults');
+  btn.disabled = true;
   statusEl.hidden = false;
   statusEl.textContent = '検索中…';
   resultsEl.innerHTML = '';
@@ -149,6 +151,7 @@ document.getElementById('rakutenSearchBtn').addEventListener('click', async () =
     searchOneSource('/.netlify/functions/rakuten-search', keyword, '楽天'),
     searchOneSource('/.netlify/functions/yahoo-search', keyword, 'Yahoo!ショッピング'),
   ]);
+  btn.disabled = false;
 
   const items = [
     ...rakuten.items.map((item) => ({ ...item, source: 'rakuten', sourceLabel: '楽天市場' })),

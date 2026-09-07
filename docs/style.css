@@ -94,6 +94,7 @@ body {
 }
 .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
 .btn-danger { color: var(--danger); border-color: var(--danger); background: #fff; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .empty-state {
   text-align: center;
