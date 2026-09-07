@@ -36,11 +36,25 @@ function buildKeepaUrl(url) {
   return asin ? `https://keepa.com/#!product/5-${asin}` : null;
 }
 
-// URLの種類を判定して、Amazonならアフィリエイトタグを付ける。楽天は検索経由で
-// 追加したものだけアフィリエイト対応(URLを直接貼っただけのものは対象外)。
+// 楽天のアフィリエイトID。楽天市場の商品検索(サーバー側)だけでなく、行きたい場所・
+// ホテルなどのリストに貼った楽天トラベル/楽天GORA等のリンクにも使う「どこでもリンク」用。
+// アソシエイトタグと同じくURLに載る公開情報なのでクライアント側に置いてOK。
+const RAKUTEN_AFFILIATE_ID = '57416495.7c2d7ecb.57416496.07b01883';
+
+// 楽天グループの任意のURL(楽天トラベル・楽天GORA・楽天ブックス等)を、楽天の
+// 「どこでもリンク」形式でアフィリエイトリンク化する。すでに変換済みのリンクはそのまま。
+function buildRakutenAffiliateUrl(url) {
+  if (!url || !RAKUTEN_AFFILIATE_ID) return url;
+  if (/hb\.afl\.rakuten\.co\.jp/i.test(url)) return url;
+  const encoded = encodeURIComponent(url);
+  return `https://hb.afl.rakuten.co.jp/hgc/${RAKUTEN_AFFILIATE_ID}/?pc=${encoded}&m=${encoded}`;
+}
+
+// URLの種類を判定して、Amazon・楽天グループのリンクにはアフィリエイトを自動で付ける。
 function decorateLink(url) {
   if (!url) return null;
   if (/amazon\.co\.jp/i.test(url)) return buildAmazonAffiliateUrl(url);
+  if (/(^|\.)rakuten\.co\.jp/i.test(url)) return buildRakutenAffiliateUrl(url);
   return url;
 }
 
