@@ -1,22 +1,23 @@
 // 楽天市場商品検索(公式・無料の楽天ウェブサービスAPI)。
-// 2026年7月版のAPIはapplicationId・accessKeyの両方が必須で、さらに
-// Allowed websitesに登録したサイトからのアクセスかをRefererヘッダーで
-// 確認する仕様。Node.jsのfetch()は仕様上Refererヘッダーを上書きできない
-// (ブラウザと同じ「forbidden header」扱いのため)ので、httpsモジュールで
-// 直接リクエストを組み立てて回避する。
+// 2026年版のAPIはapplicationId・accessKeyの両方が必須で、さらに
+// Allowed websitesに登録したサイトからのアクセスかをRefererとOriginの
+// 両方のヘッダーで確認する仕様(Refererだけだと
+// REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSINGになる)。Node.jsのfetch()は
+// 仕様上Refererヘッダーを上書きできない(ブラウザと同じ「forbidden header」
+// 扱いのため)ので、httpsモジュールで直接リクエストを組み立てて回避する。
 const https = require('https');
 
 const RAKUTEN_HOST = 'openapi.rakuten.co.jp';
 const RAKUTEN_PATH = '/ichibams/api/IchibaItem/Search/20260701';
 
-function requestRakuten(path, referer) {
+function requestRakuten(path, referer, accessKey) {
   return new Promise((resolve, reject) => {
     const req = https.request(
       {
         hostname: RAKUTEN_HOST,
         path,
         method: 'GET',
-        headers: { Referer: referer },
+        headers: { Referer: referer, Origin: referer, accessKey },
       },
       (res) => {
         let body = '';
@@ -87,7 +88,7 @@ exports.handler = async (event) => {
 
   let res;
   try {
-    res = await requestRakuten(`${RAKUTEN_PATH}?${params.toString()}`, referer);
+    res = await requestRakuten(`${RAKUTEN_PATH}?${params.toString()}`, referer, accessKey);
   } catch {
     return { statusCode: 502, body: JSON.stringify({ error: '楽天への通信に失敗したよ' }) };
   }
