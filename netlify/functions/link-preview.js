@@ -84,18 +84,18 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid URL' }) };
   }
 
-  // Amazonはデータセンターからのアクセスをブロックしていて毎回503になるだけなので、
-  // 無駄に待たせずに最初から諦める(ここは今まで通り手動入力してもらう)。
-  if (/amazon\.co\.jp/i.test(url)) {
+  // Amazon・楽天はデータセンターからのアクセスを事実上ブロックしていて、毎回
+  // 503またはタイムアウトになるだけなので、無駄に待たせずに最初から諦める
+  // (ここは今まで通り手動入力してもらう)。
+  if (/amazon\.co\.jp|rakuten\.co\.jp/i.test(url)) {
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
   }
 
-  const startedAt = Date.now();
   let result;
   try {
     result = await fetchHtml(url);
-  } catch (err) {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugError: String(err && err.message || err), debugMs: Date.now() - startedAt }) };
+  } catch {
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
   }
 
   const html = result.body;
