@@ -60,13 +60,8 @@ async function saveData(sessionToken, data) {
 }
 
 async function fetchLinkPreview(url) {
-  // 楽天の商品ページは公式APIでitemCode検索した方が確実に取れる
-  // (ページを直接読みに行く方式だとブロックされて取得できないため)。
-  const endpoint = /(^|\.)rakuten\.co\.jp$/i.test(new URL(url).hostname)
-    ? '/.netlify/functions/rakuten-item-lookup'
-    : '/.netlify/functions/link-preview';
   try {
-    const res = await fetch(endpoint, {
+    const res = await fetch('/.netlify/functions/link-preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
