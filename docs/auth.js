@@ -4,7 +4,7 @@
 // (netlify/functions/line-token-exchange.js)側でchannel secretを使って行う。
 const LINE_LOGIN_CONFIG = {
   // LINE Developersコンソールで発行される「チャネルID」。公開情報なのでここに書いてOK。
-  channelId: '__LINE_CHANNEL_ID__',
+  channelId: '2011476818',
   // アクセス方法によってpathnameがブレるとコールバックURL不一致で400になるため、
   // 常にオリジン直下の固定パスを使う。
   redirectUri: window.location.origin + '/',
