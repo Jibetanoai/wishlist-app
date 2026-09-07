@@ -131,6 +131,10 @@
           <input type="text" id="wish_image">
         </label>
       </div>
+      <label id="wishPriceCommentLabel" hidden>この価格変更のメモ(あれば。例: 値上げされた/セール中)
+        <input type="text" id="wish_price_comment" placeholder="例: 値上げされてた">
+      </label>
+      <button type="button" id="wishPriceHistoryBtn" class="btn" style="width:100%; margin-bottom:12px;" hidden>📊 価格の推移を見る</button>
       <button type="button" id="wishImageSearchBtn" class="btn" style="width:100%; margin-bottom:12px;">🔍 商品名で画像を検索</button>
       <div id="wishImageResults" class="rakuten-results" style="margin-bottom:12px;"></div>
       <label>商品ページのURL
@@ -146,6 +150,21 @@
         <button type="submit" class="btn btn-primary">保存</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ============ 価格推移モーダル ============ -->
+<div id="priceHistoryModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📊 価格の推移</h2>
+      <button class="icon-btn js-close-price-history" aria-label="閉じる">×</button>
+    </div>
+    <div id="priceHistoryContent"></div>
+    <div class="modal-footer">
+      <div class="spacer"></div>
+      <button type="button" class="btn js-close-price-history">閉じる</button>
+    </div>
   </div>
 </div>
 

@@ -8,6 +8,39 @@ function lowestPrice(item) {
   return prices.length ? Math.min(...prices) : null;
 }
 
+// priceHistory(過去の価格)+ 現在価格をまとめて時系列の折れ線グラフ(SVG)にする。
+// 値上がりは赤、値下がりは緑で、最初から最新までの変化率も表示する。
+function renderPriceHistoryChart(points) {
+  if (points.length < 2) return '<p class="pl-row-empty">価格の変化がまだ記録されてないよ。</p>';
+  const width = 320;
+  const height = 140;
+  const padding = 28;
+  const prices = points.map((p) => p.price);
+  const minP = Math.min(...prices);
+  const maxP = Math.max(...prices);
+  const range = maxP - minP || 1;
+  const coords = points.map((p, i) => ({
+    x: padding + (points.length === 1 ? 0 : (i / (points.length - 1)) * (width - padding * 2)),
+    y: height - padding - ((p.price - minP) / range) * (height - padding * 2),
+    ...p,
+  }));
+  const first = points[0].price;
+  const last = points[points.length - 1].price;
+  const changePct = first ? Math.round(((last - first) / first) * 1000) / 10 : 0;
+  const changeColor = changePct > 0 ? 'var(--danger)' : changePct < 0 ? 'var(--ok)' : 'var(--text-muted)';
+  const changeSign = changePct > 0 ? '+' : '';
+  const pathD = coords.map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(' ');
+  const dots = coords.map((c) => `<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" fill="${changeColor}"><title>${escapeHtml(c.date)}: ${Number(c.price).toLocaleString()}円</title></circle>`).join('');
+
+  return `
+    <div class="price-chart-change" style="color:${changeColor};">${changeSign}${changePct}%(${escapeHtml(points[0].date)}→${escapeHtml(points[points.length - 1].date)})</div>
+    <svg viewBox="0 0 ${width} ${height}" class="price-chart-svg" preserveAspectRatio="none">
+      <path d="${pathD}" fill="none" stroke="${changeColor}" stroke-width="2"></path>
+      ${dots}
+    </svg>
+  `;
+}
+
 const SOURCE_LABELS = { rakuten: '楽天市場', yahoo: 'Yahoo!ショッピング', amazon: 'Amazon', other: 'その他' };
 
 function renderWishlist() {
@@ -89,13 +122,18 @@ document.getElementById('wishSourceTabs').addEventListener('click', (e) => {
   setWishSourceTab(btn.dataset.source);
 });
 
+let currentEditingWishItem = null;
+
 function openAddWishModal() {
+  currentEditingWishItem = null;
   wishForm.reset();
   document.getElementById('wishId').value = '';
   document.getElementById('rakutenKeyword').value = '';
   document.getElementById('rakutenResults').innerHTML = '';
   document.getElementById('rakutenSearchStatus').hidden = true;
   document.getElementById('wishImageResults').innerHTML = '';
+  document.getElementById('wishPriceCommentLabel').hidden = true;
+  document.getElementById('wishPriceHistoryBtn').hidden = true;
   document.getElementById('wishModalTitle').textContent = 'ほしい物を追加';
   deleteWishBtn.hidden = true;
   setWishSourceTab('rakuten');
@@ -103,13 +141,17 @@ function openAddWishModal() {
 }
 
 function openWishModal(item) {
+  currentEditingWishItem = item;
   document.getElementById('wishId').value = item.id;
   document.getElementById('wish_title').value = item.title || '';
   document.getElementById('wish_price').value = item.price ?? '';
   document.getElementById('wish_image').value = item.image || '';
   document.getElementById('wish_url').value = item.url || '';
   document.getElementById('wish_memo').value = item.memo || '';
+  document.getElementById('wish_price_comment').value = '';
   document.getElementById('wishImageResults').innerHTML = '';
+  document.getElementById('wishPriceCommentLabel').hidden = false;
+  document.getElementById('wishPriceHistoryBtn').hidden = !(item.priceHistory && item.priceHistory.length);
   document.getElementById('wishModalTitle').textContent = 'ほしい物を編集';
   deleteWishBtn.hidden = false;
   setWishSourceTab(item.source || 'other');
@@ -275,13 +317,15 @@ wishForm.addEventListener('submit', async (e) => {
     memo: document.getElementById('wish_memo').value || null,
   };
 
+  const priceComment = document.getElementById('wish_price_comment').value.trim() || null;
+
   appData.wishlist = appData.wishlist || [];
   if (id) {
     const existing = appData.wishlist.find((w) => w.id === id);
     if (existing) {
       const priceHistory = existing.priceHistory || [];
       if (existing.price != null && existing.price !== newPrice) {
-        priceHistory.push({ date: localDateStr(), price: existing.price });
+        priceHistory.push({ date: localDateStr(), price: existing.price, comment: priceComment });
       }
       Object.assign(existing, body, { priceHistory });
     }
@@ -310,4 +354,63 @@ deleteWishBtn.addEventListener('click', async () => {
   } catch (err) {
     alert(err.message);
   }
+});
+
+const priceHistoryModalOverlay = document.getElementById('priceHistoryModalOverlay');
+
+function openPriceHistoryModal(item) {
+  const history = item.priceHistory || [];
+  const points = history.slice();
+  if (item.price != null) {
+    points.push({ date: localDateStr(), price: item.price, comment: item.priceComment || null, isCurrent: true });
+  }
+
+  const contentEl = document.getElementById('priceHistoryContent');
+  contentEl.innerHTML = `
+    ${renderPriceHistoryChart(points)}
+    <div class="price-history-list">
+      ${points.map((p, idx) => `
+        <div class="price-history-row">
+          <div class="price-history-date">${escapeHtml(p.date)}${p.isCurrent ? '(現在)' : ''}</div>
+          <div class="price-history-price">${Number(p.price).toLocaleString()}円</div>
+          <input type="text" class="price-history-comment" data-idx="${idx}" placeholder="メモ" value="${escapeHtml(p.comment || '')}">
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  contentEl.querySelectorAll('.price-history-comment').forEach((input) => {
+    input.addEventListener('change', async () => {
+      const idx = Number(input.dataset.idx);
+      const comment = input.value.trim() || null;
+      if (points[idx].isCurrent) {
+        item.priceComment = comment;
+      } else {
+        // historyの何番目かは、現在価格分(末尾に足した1件)を除いたインデックスに対応する。
+        const historyIdx = idx;
+        if (item.priceHistory && item.priceHistory[historyIdx]) {
+          item.priceHistory[historyIdx].comment = comment;
+        }
+      }
+      try {
+        await saveData();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  });
+
+  priceHistoryModalOverlay.hidden = false;
+}
+
+document.getElementById('wishPriceHistoryBtn').addEventListener('click', () => {
+  if (currentEditingWishItem) openPriceHistoryModal(currentEditingWishItem);
+});
+
+document.querySelectorAll('.js-close-price-history').forEach((btn) => btn.addEventListener('click', () => {
+  priceHistoryModalOverlay.hidden = true;
+  renderWishlist();
+}));
+priceHistoryModalOverlay.addEventListener('click', (e) => {
+  if (e.target === priceHistoryModalOverlay) { priceHistoryModalOverlay.hidden = true; renderWishlist(); }
 });
