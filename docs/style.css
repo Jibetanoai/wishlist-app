@@ -50,15 +50,29 @@ body {
 .header-user {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+.header-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .header-user-name {
   font-size: 0.85rem;
   color: var(--text-muted);
-  max-width: 120px;
+  max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.boot-loading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-screen {

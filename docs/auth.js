@@ -60,15 +60,26 @@ function showLoginError(msg) {
 }
 
 function showLoginScreen() {
+  document.getElementById('bootLoading').hidden = true;
   document.getElementById('loginScreen').hidden = false;
   document.getElementById('appRoot').hidden = true;
 }
 
 function showApp() {
+  document.getElementById('bootLoading').hidden = true;
   document.getElementById('loginScreen').hidden = true;
   document.getElementById('appRoot').hidden = false;
   const nameEl = document.getElementById('loggedInName');
   if (nameEl) nameEl.textContent = (currentUser && currentUser.name) || '';
+  const avatarEl = document.getElementById('loggedInAvatar');
+  if (avatarEl) {
+    if (currentUser && currentUser.picture) {
+      avatarEl.src = currentUser.picture;
+      avatarEl.hidden = false;
+    } else {
+      avatarEl.hidden = true;
+    }
+  }
   if (typeof onAuthReady === 'function') onAuthReady();
 }
 
@@ -161,5 +172,6 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   clearAuth();
   if (typeof EMPTY_APP_DATA !== 'undefined') appData = { ...EMPTY_APP_DATA };
   editUnlocked = false;
+  document.getElementById('loggedInAvatar').hidden = true;
   showLoginScreen();
 });
