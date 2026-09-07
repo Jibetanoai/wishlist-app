@@ -7,7 +7,7 @@ const SIMPLE_LISTS = {
   restaurantlist: { icon: '🍴', label: '飲食店', listEl: 'restaurantList', emptyEl: 'restaurantEmptyState', placeholder: '例: 〇〇焼肉店' },
   hotellist: { icon: '🏨', label: 'ホテル', listEl: 'hotelList', emptyEl: 'hotelEmptyState', placeholder: '例: 〇〇リゾート' },
   cafelist: { icon: '☕', label: 'カフェ', listEl: 'cafeList', emptyEl: 'cafeEmptyState', placeholder: '例: 〇〇珈琲' },
-  furusatolist: { icon: '🎁', label: 'ふるさと納税', listEl: 'furusatoList', emptyEl: 'furusatoEmptyState', placeholder: '例: 宮崎県都城市 黒毛和牛', hasAmount: true },
+  furusatolist: { icon: '🎁', label: 'ふるさと納税', listEl: 'furusatoList', emptyEl: 'furusatoEmptyState', totalEl: 'furusatoTotal', placeholder: '例: 宮崎県都城市 黒毛和牛', hasAmount: true },
 };
 
 function renderSimpleList(key) {
@@ -17,6 +17,19 @@ function renderSimpleList(key) {
   const items = appData[key] || [];
   emptyState.hidden = items.length !== 0;
   list.innerHTML = '';
+
+  if (cfg.hasAmount && cfg.totalEl) {
+    const totalEl = document.getElementById(cfg.totalEl);
+    const amountedItems = items.filter((item) => item.amount != null);
+    const unamountedCount = items.length - amountedItems.length;
+    if (items.length > 0) {
+      const total = amountedItems.reduce((sum, item) => sum + Number(item.amount), 0);
+      totalEl.innerHTML = `<span>合計金額(${amountedItems.length}件)${unamountedCount ? ` <span class="card-detail" style="display:inline;">・未登録${unamountedCount}件</span>` : ''}</span><strong>${total.toLocaleString()}円</strong>`;
+      totalEl.hidden = false;
+    } else {
+      totalEl.hidden = true;
+    }
+  }
 
   const addRow = document.createElement('button');
   addRow.type = 'button';

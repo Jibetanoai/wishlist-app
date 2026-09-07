@@ -13,9 +13,20 @@ const SOURCE_LABELS = { rakuten: '楽天市場', yahoo: 'Yahoo!ショッピン�
 function renderWishlist() {
   const grid = document.getElementById('wishGrid');
   const emptyState = document.getElementById('wishEmptyState');
+  const totalEl = document.getElementById('wishTotal');
   const list = appData.wishlist || [];
   emptyState.hidden = list.length !== 0;
   grid.innerHTML = '';
+
+  const pricedItems = list.filter((item) => item.price != null);
+  const unpricedCount = list.length - pricedItems.length;
+  if (list.length > 0) {
+    const total = pricedItems.reduce((sum, item) => sum + Number(item.price), 0);
+    totalEl.innerHTML = `<span>合計金額(${pricedItems.length}件)${unpricedCount ? ` <span class="card-detail" style="display:inline;">・価格未登録${unpricedCount}件</span>` : ''}</span><strong>${total.toLocaleString()}円</strong>`;
+    totalEl.hidden = false;
+  } else {
+    totalEl.hidden = true;
+  }
 
   const addCard = document.createElement('button');
   addCard.type = 'button';
