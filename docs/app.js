@@ -63,6 +63,7 @@ const VALUECOMMERCE_PIDS = {
   'www.ikyu.com': '892693499', // 一休.com(ホテル予約本体、レストラン版とは別プログラム)
   'jtb.co.jp': '892693501', // JTB(国内宿泊予約)
   'travel.yahoo.co.jp': '892693515', // Yahoo!トラベル
+  'his-j.com': '892693516', // HIS(海外旅行)
 };
 
 // バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
