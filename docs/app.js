@@ -91,6 +91,7 @@ const VALUECOMMERCE_PIDS = {
   'furusato-tax.jp': '892693527', // ふるさとチョイス
   'furunavi.jp': '892693530', // ふるなび
   'shopping.yahoo.co.jp': '892693719', // Yahoo!ショッピング(store.shopping/talk.shopping等のサブドメインも含む)
+  'ozmall.co.jp': '892693809', // OZmall(レストラン・ホテル・旅行など幅広く扱うので複数リストで使える)
 };
 
 // バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
