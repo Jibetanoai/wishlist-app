@@ -46,7 +46,7 @@ function fetchHtml(url) {
       },
     );
     req.on('error', reject);
-    req.setTimeout(6000, () => req.destroy(new Error('timeout')));
+    req.setTimeout(9000, () => req.destroy(new Error('timeout')));
     req.end();
   });
 }
@@ -84,11 +84,17 @@ exports.handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid URL' }) };
   }
 
+  // Amazonはデータセンターからのアクセスをブロックしていて毎回503になるだけなので、
+  // 無駄に待たせずに最初から諦める(ここは今まで通り手動入力してもらう)。
+  if (/amazon\.co\.jp/i.test(url)) {
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
+  }
+
   let result;
   try {
     result = await fetchHtml(url);
-  } catch (err) {
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null, debugError: String(err && err.message || err) }) };
+  } catch {
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: null, image: null }) };
   }
 
   const html = result.body;
@@ -102,10 +108,6 @@ exports.handler = async (event) => {
     body: JSON.stringify({
       title: rawTitle ? decodeEntities(rawTitle).trim().slice(0, 200) : null,
       image: rawImage || null,
-      debugStatus: result.statusCode,
-      debugContentEncoding: result.headers['content-encoding'] || null,
-      debugHtmlLength: html.length,
-      debugHtmlSnippet: html.slice(0, 300),
     }),
   };
 };
