@@ -56,6 +56,7 @@ function buildRakutenAffiliateUrl(url) {
 const VALUECOMMERCE_SID = '3780809';
 const VALUECOMMERCE_PIDS = {
   'tabelog.com': '892693484', // 食べログ 飲食店ネット予約プログラム
+  'jalan.net': '892693488', // じゃらんnet(ホテル・宿予約)
 };
 
 // バリューコマース経由のリンクをMyLink形式に変換する。対応してないドメインはそのまま。
