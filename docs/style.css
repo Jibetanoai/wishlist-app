@@ -561,7 +561,6 @@ form input[type="text"], form input[type="number"], form input[type="password"],
   .form-row { grid-template-columns: 1fr; }
 }
 
-.list-toolbar { justify-content: space-between; align-items: center; gap: 10px; }
 
 .modal label {
   display: block;
@@ -579,12 +578,22 @@ form input[type="text"], form input[type="number"], form input[type="password"],
   font-size: 0.95rem;
   font-family: inherit;
 }
+.share-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+}
 .share-toggle-row {
   display: flex !important;
   align-items: center;
   gap: 8px;
   font-size: 0.9rem !important;
   color: var(--text) !important;
+  margin-bottom: 0 !important;
 }
 .share-toggle-row input { width: 18px; height: 18px; }
 

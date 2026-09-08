@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ほしい物リスト</title>
-<meta name="description" content="公開されているほしい物リストです。プレゼント選びの参考にどうぞ。">
+<title>公開リスト</title>
+<meta name="description" content="公開されているリストです。プレゼント選びやお出かけの参考にどうぞ。">
 <meta name="robots" content="index,follow">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="stylesheet" href="style.css">
@@ -37,22 +37,24 @@
   }
   .site-footer a { color: var(--text-muted); margin: 0 8px; }
   .wish-card.purchased-note { opacity: 0.6; }
+  .share-section { margin-bottom: 32px; }
+  .share-section h2 { font-size: 1.05rem; margin: 0 0 12px; }
 </style>
 </head>
 <body>
 
 <header class="share-header">
-  <h1>🎁 ほしい物リスト</h1>
+  <h1>🎁 公開リスト</h1>
   <p id="shareIntro">読み込み中…</p>
   <div class="share-disclosure">
-    このページはギフト選びの参考のために公開されています。掲載している商品リンクの一部にはアフィリエイトプログラム(Amazonアソシエイト・楽天アフィリエイト等)による広告を含みます。リンク経由の購入により、サイト運営者が紹介料を得ることがあります。
+    このページはプレゼント選びやお出かけの参考のために公開されています。掲載しているリンクの一部にはアフィリエイトプログラム(Amazonアソシエイト・楽天アフィリエイト・バリューコマース等)による広告を含みます。リンク経由の購入・予約により、サイト運営者が紹介料を得ることがあります。
   </div>
 </header>
 
 <main class="share-main">
   <div id="shareLoading" class="loading-state">読み込み中…</div>
   <div id="shareError" class="empty-state" hidden></div>
-  <div id="shareGrid" class="card-grid" hidden></div>
+  <div id="shareSections" hidden></div>
 </main>
 
 <footer class="site-footer">

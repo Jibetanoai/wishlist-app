@@ -40,6 +40,7 @@
 <header class="app-header">
   <h1>🎁 ウィッシュリスト</h1>
   <div class="header-user">
+    <button id="shareSettingsBtn" class="edit-mode-btn" title="友達・家族に見せる公開ページを作る">🌐 公開ページ</button>
     <button id="inviteBtn" class="edit-mode-btn" title="友達にアプリを教える">🔗 招待</button>
     <img id="loggedInAvatar" class="header-avatar" alt="" hidden>
     <span id="loggedInName" class="header-user-name"></span>
@@ -62,9 +63,6 @@
 <!-- ============ ほしい物リスト ============ -->
 <section id="section-wishlist" class="app-section" hidden>
   <div id="wishTotal" class="list-total" hidden></div>
-  <div class="list-toolbar" id="wishShareBar">
-    <button type="button" id="shareSettingsBtn" class="btn">🌐 公開ページ</button>
-  </div>
   <div class="list-toolbar" id="wishSortBar" hidden>
     <label class="sort-label">並び替え
       <select id="wishSortSelect">
@@ -181,11 +179,15 @@
       <h2>🌐 公開ページ</h2>
       <button class="icon-btn js-close-share-settings" aria-label="閉じる">×</button>
     </div>
-    <p class="login-lead" style="text-align:left; margin-top:0;">「ほしい物」だけを、ログインしてない友達・家族にも見てもらえる公開ページを作れるよ。プレゼントの参考にしてもらいたい時に使ってね。</p>
-    <label class="share-toggle-row">
-      <input type="checkbox" id="shareEnabledCheckbox">
-      このリストを公開する
-    </label>
+    <p class="login-lead" style="text-align:left; margin-top:0;">選んだリストだけを、ログインしてない友達・家族にも見てもらえる公開ページを作れるよ。プレゼントの参考にしてもらいたい時や、行きたい場所を共有したい時に使ってね。</p>
+    <div class="share-toggle-list" id="shareToggleList">
+      <label class="share-toggle-row"><input type="checkbox" data-share-key="wishlist"> 🎁 ほしい物</label>
+      <label class="share-toggle-row"><input type="checkbox" data-share-key="travellist"> ✈️ 行きたいところ</label>
+      <label class="share-toggle-row"><input type="checkbox" data-share-key="restaurantlist"> 🍴 行きたい飲食店</label>
+      <label class="share-toggle-row"><input type="checkbox" data-share-key="hotellist"> 🏨 泊まりたいホテル</label>
+      <label class="share-toggle-row"><input type="checkbox" data-share-key="cafelist"> ☕ 行きたいカフェ</label>
+      <label class="share-toggle-row"><input type="checkbox" data-share-key="furusatolist"> 🎁 ふるさと納税</label>
+    </div>
     <label>公開ページの一言メッセージ(任意)
       <input type="text" id="shareLabelInput" placeholder="例: 誕生日プレゼントの参考にどうぞ!">
     </label>

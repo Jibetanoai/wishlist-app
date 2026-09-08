@@ -1,14 +1,18 @@
-// 「🌐 公開ページ」モーダル。ほしい物リストを、ログインなしで見られる公開URLとして
-// 出せるかどうかをここで切り替える。トークン自体はuserIdから決定的に導出されるので、
-// 発行し直しても同じURLになる(=リンクを作り直して無効化することはできない。
-// 漏れた場合は「公開する」のチェックを外せば即座に見れなくなる、という設計)。
+// 「🌐 公開ページ」モーダル。リストをカテゴリごとに選んで、ログインなしで見られる
+// 公開URLとして出せるかどうかをここで切り替える。トークン自体はuserIdから決定的に
+// 導出されるので、発行し直しても同じURLになる(=リンクを作り直して無効化する
+// ことはできない。漏れた場合はチェックを全部外せば即座に見れなくなる、という設計)。
 const shareModalOverlay = document.getElementById('shareSettingsModalOverlay');
-const shareEnabledCheckbox = document.getElementById('shareEnabledCheckbox');
+const shareToggleList = document.getElementById('shareToggleList');
 const shareLabelInput = document.getElementById('shareLabelInput');
 const shareLinkRow = document.getElementById('shareLinkRow');
 const shareLinkInput = document.getElementById('shareLinkInput');
 const shareStatusEl = document.getElementById('shareStatus');
 const shareCopyBtn = document.getElementById('shareCopyBtn');
+
+function isAnyShareEnabled() {
+  return Object.values(appData.shareSettings || {}).some(Boolean);
+}
 
 async function fetchShareToken() {
   const res = await fetch('/.netlify/functions/share-create', {
@@ -22,7 +26,7 @@ async function fetchShareToken() {
 }
 
 async function updateShareLinkVisibility() {
-  if (!appData.shareEnabled) {
+  if (!isAnyShareEnabled()) {
     shareLinkRow.hidden = true;
     return;
   }
@@ -39,7 +43,10 @@ async function updateShareLinkVisibility() {
 
 document.getElementById('shareSettingsBtn').addEventListener('click', () => {
   shareStatusEl.hidden = true;
-  shareEnabledCheckbox.checked = !!appData.shareEnabled;
+  const settings = appData.shareSettings || {};
+  shareToggleList.querySelectorAll('input[data-share-key]').forEach((cb) => {
+    cb.checked = !!settings[cb.dataset.shareKey];
+  });
   shareLabelInput.value = appData.shareLabel || '';
   updateShareLinkVisibility();
   shareModalOverlay.hidden = false;
@@ -52,7 +59,11 @@ shareModalOverlay.addEventListener('click', (e) => { if (e.target === shareModal
 
 async function persistShareSettings() {
   shareStatusEl.hidden = true;
-  appData.shareEnabled = shareEnabledCheckbox.checked;
+  const settings = {};
+  shareToggleList.querySelectorAll('input[data-share-key]').forEach((cb) => {
+    settings[cb.dataset.shareKey] = cb.checked;
+  });
+  appData.shareSettings = settings;
   appData.shareLabel = shareLabelInput.value.trim() || null;
   try {
     await saveData();
@@ -63,7 +74,9 @@ async function persistShareSettings() {
   }
 }
 
-shareEnabledCheckbox.addEventListener('change', persistShareSettings);
+shareToggleList.addEventListener('change', (e) => {
+  if (e.target.matches('input[data-share-key]')) persistShareSettings();
+});
 shareLabelInput.addEventListener('change', persistShareSettings);
 
 shareCopyBtn.addEventListener('click', async () => {

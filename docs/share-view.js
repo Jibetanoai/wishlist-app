@@ -89,12 +89,51 @@ function decorateLink(url) {
 
 const SOURCE_LABELS = { rakuten: '楽天市場', yahoo: 'Yahoo!ショッピング', amazon: 'Amazon', other: 'その他' };
 
+function renderWishSection(section) {
+  if (section.items.length === 0) return '<p class="pl-row-empty">まだ何も登録されてないよ。</p>';
+  return `<div class="card-grid">${section.items.map((item) => {
+    const buyUrl = decorateLink(item.url);
+    const keepaUrl = buildKeepaUrl(item.url);
+    return `
+      <div class="wish-card${item.purchased ? ' purchased-note' : ''}">
+        ${item.image ? `<img class="wish-image" src="${escapeHtml(item.image)}" alt="">` : '<div class="wish-image wish-image-placeholder">🎁</div>'}
+        <div class="wish-body">
+          ${item.purchased ? '<div class="wish-source-badge">🎁 購入済み(誰かが贈ったかも)</div>' : ''}
+          <div class="wish-title">${escapeHtml(item.title)}</div>
+          <div class="wish-price">${item.price != null ? Number(item.price).toLocaleString() + '円' : '価格未登録'}</div>
+          <div class="wish-links">
+            ${buyUrl ? `<a href="${escapeHtml(buyUrl)}" target="_blank" rel="noopener sponsored" class="btn btn-primary wish-link-btn">🛒 見る・買う</a>` : ''}
+            ${keepaUrl ? `<a href="${escapeHtml(keepaUrl)}" target="_blank" rel="noopener" class="btn wish-link-btn">📈 価格推移(Keepa)</a>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
+function renderSimpleSection(section) {
+  if (section.items.length === 0) return '<p class="pl-row-empty">まだ何も登録されてないよ。</p>';
+  return `<div class="simple-list">${section.items.map((item) => {
+    const link = decorateLink(item.link);
+    return `
+      <div class="simple-row${item.done ? ' done' : ''}">
+        ${item.image ? `<img class="simple-thumb" src="${escapeHtml(item.image)}" alt="">` : ''}
+        <div class="simple-body">
+          <div class="simple-title">${escapeHtml(item.title)}</div>
+          ${item.amount != null ? `<div class="card-detail">寄付金額: ${Number(item.amount).toLocaleString()}円</div>` : ''}
+          ${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener sponsored" class="simple-link">🔗 見る・予約する</a>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
 (async function init() {
   const token = new URLSearchParams(window.location.search).get('t');
   const introEl = document.getElementById('shareIntro');
   const loadingEl = document.getElementById('shareLoading');
   const errorEl = document.getElementById('shareError');
-  const gridEl = document.getElementById('shareGrid');
+  const sectionsEl = document.getElementById('shareSections');
 
   if (!token) {
     loadingEl.hidden = true;
@@ -122,33 +161,21 @@ const SOURCE_LABELS = { rakuten: '楽天市場', yahoo: 'Yahoo!ショッピン�
   }
 
   loadingEl.hidden = true;
-  introEl.textContent = result.label || 'プレゼント選びの参考にどうぞ。';
-  document.title = (result.label ? `${result.label} - ` : '') + 'ほしい物リスト';
+  introEl.textContent = result.label || 'プレゼント選びやお出かけの参考にどうぞ。';
+  document.title = (result.label ? `${result.label} - ` : '') + '公開リスト';
 
-  const items = result.items || [];
-  if (items.length === 0) {
-    errorEl.textContent = 'まだ何も登録されてないみたい。';
+  const sections = result.sections || [];
+  if (sections.length === 0) {
+    errorEl.textContent = 'まだ何も公開されてないみたい。';
     errorEl.hidden = false;
     return;
   }
 
-  gridEl.hidden = false;
-  gridEl.innerHTML = items.map((item) => {
-    const buyUrl = decorateLink(item.url);
-    const keepaUrl = buildKeepaUrl(item.url);
-    return `
-      <div class="wish-card${item.purchased ? ' purchased-note' : ''}">
-        ${item.image ? `<img class="wish-image" src="${escapeHtml(item.image)}" alt="">` : '<div class="wish-image wish-image-placeholder">🎁</div>'}
-        <div class="wish-body">
-          ${item.purchased ? '<div class="wish-source-badge">🎁 購入済み(誰かが贈ったかも)</div>' : ''}
-          <div class="wish-title">${escapeHtml(item.title)}</div>
-          <div class="wish-price">${item.price != null ? Number(item.price).toLocaleString() + '円' : '価格未登録'}</div>
-          <div class="wish-links">
-            ${buyUrl ? `<a href="${escapeHtml(buyUrl)}" target="_blank" rel="noopener sponsored" class="btn btn-primary wish-link-btn">🛒 見る・買う</a>` : ''}
-            ${keepaUrl ? `<a href="${escapeHtml(keepaUrl)}" target="_blank" rel="noopener" class="btn wish-link-btn">📈 価格推移(Keepa)</a>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  sectionsEl.hidden = false;
+  sectionsEl.innerHTML = sections.map((section) => `
+    <section class="share-section">
+      <h2>${escapeHtml(section.label)}</h2>
+      ${section.type === 'wish' ? renderWishSection(section) : renderSimpleSection(section)}
+    </section>
+  `).join('');
 })();
