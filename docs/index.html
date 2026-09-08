@@ -25,6 +25,13 @@
     <p class="login-lead">LINEでログインすると、あなただけのリストが使えるようになるよ。</p>
     <button id="lineLoginBtn" class="btn btn-line">LINEでログイン</button>
     <p id="loginError" class="login-error" hidden></p>
+    <p class="login-description">自分だけの「ほしい物」「やりたいこと」「行きたい場所」等を記録して管理できる個人用アプリです。ほしい物リストは、友達・家族に見せる公開ページとしても使えます(公開ページには一部アフィリエイト広告リンクを含みます)。</p>
+    <p id="sampleShareLinkRow" hidden><a id="sampleShareLink" href="#">🎁 公開ページのサンプルを見る</a></p>
+    <p class="site-footer-links">
+      <a href="operator.html">運営者情報</a> ・
+      <a href="privacy-policy.html">プライバシーポリシー</a> ・
+      <a href="contact.html">お問い合わせ</a>
+    </p>
   </div>
 </div>
 
@@ -55,6 +62,9 @@
 <!-- ============ ほしい物リスト ============ -->
 <section id="section-wishlist" class="app-section" hidden>
   <div id="wishTotal" class="list-total" hidden></div>
+  <div class="list-toolbar" id="wishShareBar">
+    <button type="button" id="shareSettingsBtn" class="btn">🌐 公開ページ</button>
+  </div>
   <div class="list-toolbar" id="wishSortBar" hidden>
     <label class="sort-label">並び替え
       <select id="wishSortSelect">
@@ -164,6 +174,38 @@
   </div>
 </div>
 
+<!-- ============ 公開ページ設定モーダル ============ -->
+<div id="shareSettingsModalOverlay" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>🌐 公開ページ</h2>
+      <button class="icon-btn js-close-share-settings" aria-label="閉じる">×</button>
+    </div>
+    <p class="login-lead" style="text-align:left; margin-top:0;">「ほしい物」だけを、ログインしてない友達・家族にも見てもらえる公開ページを作れるよ。プレゼントの参考にしてもらいたい時に使ってね。</p>
+    <label class="share-toggle-row">
+      <input type="checkbox" id="shareEnabledCheckbox">
+      このリストを公開する
+    </label>
+    <label>公開ページの一言メッセージ(任意)
+      <input type="text" id="shareLabelInput" placeholder="例: 誕生日プレゼントの参考にどうぞ!">
+    </label>
+    <div id="shareLinkRow" hidden>
+      <label>公開URL
+        <div class="form-row">
+          <input type="text" id="shareLinkInput" readonly>
+          <button type="button" id="shareCopyBtn" class="btn">コピー</button>
+        </div>
+      </label>
+      <p class="card-detail">購入済みにチェックした商品は、見た人に「購入済み」と表示されるよ(誰が買ったかまでは分からない)。</p>
+    </div>
+    <div id="shareStatus" class="ocr-status" hidden></div>
+    <div class="modal-footer">
+      <div class="spacer"></div>
+      <button type="button" class="btn js-close-share-settings">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ 価格推移モーダル ============ -->
 <div id="priceHistoryModalOverlay" class="modal-overlay" hidden>
   <div class="modal">
@@ -222,6 +264,7 @@
 <script src="app.js"></script>
 <script src="wishlist.js"></script>
 <script src="lists.js"></script>
+<script src="share-settings.js"></script>
 <script>initAuth();</script>
 </body>
 </html>

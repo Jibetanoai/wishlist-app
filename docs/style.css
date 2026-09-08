@@ -560,3 +560,42 @@ form input[type="text"], form input[type="number"], form input[type="password"],
 @media (max-width: 480px) {
   .form-row { grid-template-columns: 1fr; }
 }
+
+.list-toolbar { justify-content: space-between; align-items: center; gap: 10px; }
+
+.modal label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.modal input[type="text"] {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.share-toggle-row {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem !important;
+  color: var(--text) !important;
+}
+.share-toggle-row input { width: 18px; height: 18px; }
+
+.login-description {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+.site-footer-links {
+  font-size: 0.76rem;
+  margin: 0;
+}
+.site-footer-links a { color: var(--text-muted); }

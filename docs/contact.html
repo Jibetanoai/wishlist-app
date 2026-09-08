@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お問い合わせ | ウィッシュリスト</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="legal.css">
+</head>
+<body>
+<header class="legal-header"><a href="index.html">🎁 ウィッシュリスト</a></header>
+<main class="legal-main">
+<h1>お問い合わせ</h1>
+<p>本サービスに関するご質問・ご要望は、下記のフォームからお送りください。</p>
+
+<!-- Netlify Formsが静的HTMLをビルド時に解析して自動でフォームを検出する仕組みのため、
+     name="contact"のこのタグ自体が最初から publish 対象(docs/)に存在している必要がある。 -->
+<form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="contactForm">
+  <input type="hidden" name="form-name" value="contact">
+  <p style="display:none;">
+    <label>入力しないでください<input name="bot-field"></label>
+  </p>
+  <label>お名前
+    <input type="text" name="name" required>
+  </label>
+  <label>メールアドレス(返信用)
+    <input type="email" name="email" required>
+  </label>
+  <label>お問い合わせ内容
+    <textarea name="message" rows="5" required></textarea>
+  </label>
+  <button type="submit" class="btn btn-primary">送信する</button>
+</form>
+<p id="contactStatus" class="ocr-status" hidden></p>
+
+<p class="legal-footer-nav"><a href="index.html">トップに戻る</a> ・ <a href="operator.html">運営者情報</a> ・ <a href="privacy-policy.html">プライバシーポリシー</a></p>
+</main>
+<script src="contact.js"></script>
+</body>
+</html>

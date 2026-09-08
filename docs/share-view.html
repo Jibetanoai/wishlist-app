@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ほしい物リスト</title>
+<meta name="description" content="公開されているほしい物リストです。プレゼント選びの参考にどうぞ。">
+<meta name="robots" content="index,follow">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .share-header {
+    padding: calc(20px + env(safe-area-inset-top)) 20px 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .share-header h1 { margin: 0 0 6px; font-size: 1.3rem; }
+  .share-header p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+  .share-disclosure {
+    max-width: 640px;
+    margin: 14px auto 0;
+    padding: 10px 14px;
+    background: rgba(224, 96, 126, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    text-align: left;
+  }
+  .share-main { padding: 20px; max-width: 960px; margin: 0 auto; }
+  .site-footer {
+    text-align: center;
+    padding: 24px 20px 40px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+  .site-footer a { color: var(--text-muted); margin: 0 8px; }
+  .wish-card.purchased-note { opacity: 0.6; }
+</style>
+</head>
+<body>
+
+<header class="share-header">
+  <h1>🎁 ほしい物リスト</h1>
+  <p id="shareIntro">読み込み中…</p>
+  <div class="share-disclosure">
+    このページはギフト選びの参考のために公開されています。掲載している商品リンクの一部にはアフィリエイトプログラム(Amazonアソシエイト・楽天アフィリエイト等)による広告を含みます。リンク経由の購入により、サイト運営者が紹介料を得ることがあります。
+  </div>
+</header>
+
+<main class="share-main">
+  <div id="shareLoading" class="loading-state">読み込み中…</div>
+  <div id="shareError" class="empty-state" hidden></div>
+  <div id="shareGrid" class="card-grid" hidden></div>
+</main>
+
+<footer class="site-footer">
+  <a href="operator.html">運営者情報</a>
+  <a href="privacy-policy.html">プライバシーポリシー</a>
+  <a href="contact.html">お問い合わせ</a>
+</footer>
+
+<script src="share-view.js"></script>
+</body>
+</html>

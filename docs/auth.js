@@ -59,10 +59,24 @@ function showLoginError(msg) {
   el.hidden = false;
 }
 
+// 審査担当者など未ログインの訪問者が、実際にアフィリエイトリンクが貼られた
+// ページにたどり着けるように、公開ページの実例へのリンクを表示する。
+// URLはfeatured-share.jsonに書くだけで反映される(公開ページを作った後に手動で設定)。
+async function loadSampleShareLink() {
+  try {
+    const res = await fetch('/featured-share.json', { cache: 'no-store' });
+    const { url } = await res.json();
+    if (!url) return;
+    document.getElementById('sampleShareLink').href = url;
+    document.getElementById('sampleShareLinkRow').hidden = false;
+  } catch { /* サンプルが未設定でも通常のログイン画面としては問題ないので無視 */ }
+}
+
 function showLoginScreen() {
   document.getElementById('bootLoading').hidden = true;
   document.getElementById('loginScreen').hidden = false;
   document.getElementById('appRoot').hidden = true;
+  loadSampleShareLink();
 }
 
 function showApp() {
